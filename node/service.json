@@ -1,0 +1,51 @@
+{
+  "memory": 256,
+  "ttl": 10,
+  "timeout": 5000,
+  "minReplicas": 2,
+  "maxReplicas": 4,
+  "workers": 1,
+  "events": {
+    "pickupPoint": {
+      "keys": ["innoship.pickupPoint"]
+    }
+  },
+  "routes": {
+    "requestAWB": {
+      "path": "/innoship/request-awb",
+      "public": true
+    },
+    "printLabel": {
+      "path": "/innoship/get-label/:courier/:trackingNumber/:format",
+      "public": true
+    },
+    "requestAWBHistory": {
+      "path": "/innoship/request-awb-history",
+      "public": true
+    },
+    "requestPriceRates": {
+      "path": "/innoship/request-price-rates",
+      "public": true
+    },
+    "updateAWBs": {
+      "path": "/no-cache/update-awbs",
+      "public": true
+    },
+    "scheduler": {
+      "path": "/innoship/scheduler",
+      "public": true
+    },
+    "fixedLocations": {
+      "path": "/innoship/fixedLocations/:params",
+      "public": true
+    },
+    "getSettings": {
+      "path": "/innoship/get-settings",
+      "public": true
+    },
+    "syncPickupPoints": {
+      "path": "/no-cache/sync-pickup-points",
+      "public": true
+    }
+  }
+}

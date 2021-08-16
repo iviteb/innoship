@@ -1,0 +1,10 @@
+{
+  "admin.app.shipping": {
+    "component": "ShippingList",
+    "path": "/admin/app/shipping/shipping-list"
+  },
+  "admin.app.shipping-order": {
+    "component": "ShippingOrder",
+    "path": "/admin/app/shipping/order/:id"
+  }
+}
