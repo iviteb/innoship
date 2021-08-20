@@ -27,38 +27,49 @@ export async function updateAWBs(ctx: any, next: () => Promise<string>) {
           const packageItem = order.packageAttachment.packages[0]
           const { trackingNumber, courier, invoiceNumber } = packageItem
 
-          if (trackingNumber) {
-            const reverseCourier = Object.assign(
-              {},
-              ...Object.entries(constants.carriers).map(([a, b]) => ({
-                [b]: a,
-              }))
-            )
+          if (trackingNumber && invoiceNumber) {
 
-            const payload = {
-              awbList: [trackingNumber],
-              courier: reverseCourier[courier],
+            let skip = false
+            if (order?.packageAttachment?.packages[0]?.courierStatus?.data) {
+              order.packageAttachment.packages[0].courierStatus.data.map((item: any) => {
+                if (item.description === 'Canceled' || item.description === 'Canceled by Carrier' || item.description === 'Delivered') {
+                  skip = true
+                }
+              })
             }
 
-            innoship.requestAwbHistory(payload).then((data: any) => {
-              if (
-                data.length &&
-                data[0].hasOwnProperty('history') &&
-                invoiceNumber
-              ) {
-                const { history } = data[0]
-                const events = history.map((currentEvent: any) => {
-                  return {
-                    date: currentEvent.eventDate,
-                    description: currentEvent.clientStatusDescription,
-                  }
-                })
+            if (!skip) {
+              const reverseCourier = Object.assign(
+                {},
+                ...Object.entries(constants.carriers).map(([a, b]) => ({
+                  [b]: a,
+                }))
+              )
 
-                event.updateTrackingData(ctx, order.orderId, invoiceNumber, {
-                  events,
-                })
+              const payload = {
+                awbList: [trackingNumber],
+                courier: reverseCourier[courier],
               }
-            })
+
+              innoship.requestAwbHistory(payload).then((data: any) => {
+                if (
+                  data.length &&
+                  data[0].hasOwnProperty('history')
+                ) {
+                  const {history} = data[0]
+                  const events = history.map((currentEvent: any) => {
+                    return {
+                      date: currentEvent.eventDate,
+                      description: currentEvent.clientStatusDescription,
+                    }
+                  })
+
+                  event.updateTrackingData(ctx, order.orderId, invoiceNumber, {
+                    events,
+                  })
+                }
+              })
+            }
           }
         }
       })
