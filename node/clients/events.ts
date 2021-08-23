@@ -8,7 +8,7 @@ export default class Events extends JanusClient {
 
   public async getOrders(ctx: any, page: any): Promise<any> {
     return this.http.get(
-      `/api/oms/pvt/orders?&page=${page}&f_status=invoiced`,
+      `/api/oms/pvt/orders?orderBy=creationDate,desc&page=${page}&f_status=invoiced`,
       {
         headers: {
           Accept: 'application/json',
