@@ -537,7 +537,7 @@ class OrderDetails extends Component<any, any> {
         }
       });
 
-      this.setState({ changedItems, totalOrderDiscount })
+      this.setState({ changedItems, totalOrderDiscount, order })
     }
   }
 
