@@ -1,5 +1,7 @@
 import { IOClients } from '@vtex/api'
+import { Catalog } from '@vtex/clients'
 
+import CatalogApi from './catalog'
 import Events from './events'
 import Innoship from './innoship'
 
@@ -11,5 +13,13 @@ export class Clients extends IOClients {
 
   public get event() {
     return this.getOrSet('event', Events)
+  }
+
+  public get catalog() {
+    return this.getOrSet('catalog', Catalog)
+  }
+
+  public get catalogApi() {
+    return this.getOrSet('catalogApi', CatalogApi)
   }
 }

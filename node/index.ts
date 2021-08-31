@@ -1,8 +1,9 @@
-import type {ClientsConfig, RecorderState, ServiceContext} from '@vtex/api';
+import type {ClientsConfig, RecorderState, ServiceContext} from '@vtex/api'
 import { LRUCache, method, Service} from '@vtex/api'
 
 import { Clients } from './clients'
 import { processPickupPoint } from './events/processPickupPoint'
+import {getProductVariation, getSkuById} from './middlewares/catalog'
 import {
   deleteScheduler,
   getScheduler,
@@ -91,6 +92,13 @@ export default new Service({
     }),
     updateAWBs: method({
       POST: updateAWBs,
+    }),
+    // tslint:disable-next-line:object-literal-sort-keys
+    getSkuById: method({
+      GET: getSkuById,
+    }),
+    getProductVariation: method({
+      GET: getProductVariation,
     }),
   },
 })

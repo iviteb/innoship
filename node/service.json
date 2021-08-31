@@ -46,6 +46,14 @@
     "syncPickupPoints": {
       "path": "/no-cache/sync-pickup-points",
       "public": true
+    },
+    "getSkuById": {
+      "path": "/catalog/stockkeepingunit/:skuId",
+      "public": true
+    },
+    "getProductVariation": {
+      "path": "/catalog/product-variation/:productId",
+      "public": true
     }
   }
 }

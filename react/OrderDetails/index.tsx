@@ -442,7 +442,7 @@ class OrderDetails extends Component<any, any> {
     return distribution
   }
 
-  initOrderChangesAndDiscounts() {
+  async initOrderChangesAndDiscounts() {
     const { order, changedItems, giftCards } = this.state;
     let { totalOrderDiscount } = this.state;
 
@@ -467,46 +467,71 @@ class OrderDetails extends Component<any, any> {
 
     if (order.changesAttachment) {
       order.changesAttachment.changesData.map(item => {
+
         if (item.itemsAdded.length) {
-          if (item.incrementValue === 0) {
-            totalOrderDiscount += item.itemsAdded.reduce(function(result, it) {
-              result += it.price * it.quantity;
-
-              return result
-            }, 0)
-          }
-
           item.itemsAdded.map(added => {
             let val = 0;
-
             if (added.id in changedItems) {
               val = changedItems[added.id]
             }
-
             changedItems[added.id] = val + added.quantity
+
+            const existingProduct = order.items.filter((item) => {
+              return item.id === added.id
+            })
+
+            if (!existingProduct.length) {
+              fetch(`/catalog/stockkeepingunit/${added.id}`)
+                .then(resp => resp.json())
+                .then(async json => {
+
+                  let imageUrl = ""
+
+                  const variations = await fetch(`/catalog/product-variation/${json.ProductId}`)
+                    .then(response => response.json())
+
+                  const existingSku = variations.skus.filter((sku) => {
+                    return sku.sku == added.id
+                  })
+
+                  if (existingSku.length) {
+                    imageUrl = existingSku[0].image
+                  }
+
+                  order.items.push({
+                    name: json.Name,
+                    refId: json.RefId,
+                    productId: json.ProductId,
+                    id: json.Id,
+                    additionalInfo: {
+                      dimension: {
+                        cubicweight: json.CubicWeight,
+                        weight: json.WeightKg,
+                        height: json.Height,
+                        length: json.Length,
+                        width: json.Width
+                      }
+                    },
+                    measurementUnit: json.MeasurementUnit,
+                    tax: 0,
+                    price: added.price,
+                    listPrice: added.price,
+                    sellingPrice: added.price,
+                    quantity: added.quantity,
+                    imageUrl: imageUrl,
+                    unitMultiplier: added.unitMultiplier
+                  })
+                })
+            }
           })
         }
 
         if (item.itemsRemoved.length) {
-          if (item.discountValue === 0) {
-            totalOrderDiscount -= item.itemsRemoved.reduce(function(
-              result,
-              it
-            ) {
-              result += it.price * it.quantity;
-
-              return result
-            },
-            0)
-          }
-
           item.itemsRemoved.map(removed => {
             let val = 0;
-
             if (removed.id in changedItems) {
               val = changedItems[removed.id]
             }
-
             changedItems[removed.id] = val - removed.quantity
           })
         }
@@ -1272,7 +1297,9 @@ class OrderDetails extends Component<any, any> {
                         let { quantity } = item;
 
                         if (item.id in this.state.changedItems) {
-                          quantity += this.state.changedItems[item.id];
+                          if (this.state.changedItems[item.id] < 0) {
+                            quantity += this.state.changedItems[item.id];
+                          }
                           if (!quantity) {
                             return false
                           }
