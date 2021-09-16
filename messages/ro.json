@@ -77,5 +77,7 @@
   "admin/order.payment": "Plata",
   "admin/order.receiver": "Destinatar",
   "admin/order.tracking-number-is": "Numarul de urmarire este:",
-  "admin/order.print-label": "Printeaza eticheta"
+  "admin/order.print-label": "Printeaza eticheta",
+  "admin.app.shipping-couriers": "Curieri",
+  "admin.app.shipping-awb-couriers": "Actualizare automata AWB doar pentru urmatorii curieri"
 }

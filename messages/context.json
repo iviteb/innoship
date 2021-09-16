@@ -76,5 +76,7 @@
   "admin/order.payment": "admin/order.payment",
   "admin/order.receiver": "admin/order.receiver",
   "admin/order.tracking-number-is": "admin/order.tracking-number-is",
-  "admin/order.print-label": "admin/order.print-label"
+  "admin/order.print-label": "admin/order.print-label",
+  "admin.app.shipping-couriers": "admin.app.shipping-couriers",
+  "admin.app.shipping-awb-couriers": "admin.app.shipping-awb-couriers"
 }

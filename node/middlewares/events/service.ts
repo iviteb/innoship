@@ -1,10 +1,13 @@
-import constants from '../../constants'
+// import constants from '../../constants'
 
 export async function updateAWBs(ctx: any, next: () => Promise<string>) {
   try {
     const {
-      clients: { innoship, event },
+      clients: { innoship, event, masterData },
     } = ctx
+
+    const carriers = await masterData.getList(ctx, 'couriers', 'couriers')
+    const savedCarriers = await masterData.getList(ctx, 'savedCouriers', 'savedCouriers')
 
     let currentPage = 1
     let totalPages = 1
@@ -18,6 +21,12 @@ export async function updateAWBs(ctx: any, next: () => Promise<string>) {
       totalPages = orders.paging.pages > 30 ? 30 : orders.paging.pages
     } while (currentPage <= totalPages)
 
+    // @ts-ignore
+    const reverseCourier = Object.assign({}, ...Object.entries(carriers).map(([a, b]) => ({[b]: a,})))
+
+    // @ts-ignore
+    const reverseSavedCourier = Object.assign({}, ...Object.entries(savedCarriers).map(([a, b]) => ({[b]: a,})))
+
     allOrders.map((item: any) => {
       event.getOrder(ctx, item.orderId).then((order: any) => {
         if (
@@ -27,7 +36,7 @@ export async function updateAWBs(ctx: any, next: () => Promise<string>) {
           const packageItem = order.packageAttachment.packages[0]
           const { trackingNumber, courier, invoiceNumber } = packageItem
 
-          if (trackingNumber && invoiceNumber) {
+          if (trackingNumber && invoiceNumber && (reverseSavedCourier.hasOwnProperty(courier) || !Object.keys(reverseSavedCourier).length)) {
 
             let skip = false
             if (order?.packageAttachment?.packages[0]?.courierStatus?.data) {
@@ -39,13 +48,6 @@ export async function updateAWBs(ctx: any, next: () => Promise<string>) {
             }
 
             if (!skip) {
-              const reverseCourier = Object.assign(
-                {},
-                ...Object.entries(constants.carriers).map(([a, b]) => ({
-                  [b]: a,
-                }))
-              )
-
               const payload = {
                 awbList: [trackingNumber],
                 courier: reverseCourier[courier],

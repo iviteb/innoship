@@ -6,5 +6,9 @@
   "admin.app.shipping-order": {
     "component": "ShippingOrder",
     "path": "/admin/app/shipping/order/:id"
+  },
+  "admin.app.shipping-couriers": {
+    "component": "ShippingCouriers",
+    "path": "/admin/app/shipping/couriers"
   }
 }
