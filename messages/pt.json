@@ -79,5 +79,6 @@
   "admin/order.tracking-number-is": "The tracking number is:",
   "admin/order.print-label": "Print label",
   "admin.app.shipping-couriers": "Couriers",
-  "admin.app.shipping-awb-couriers": "Automatic AWB update only for the following carriers"
+  "admin.app.shipping-awb-couriers": "Automatic AWB update only for the following carriers",
+  "admin.app.shipping-awb-couriers-settings": "AWB Carriers Settings"
 }

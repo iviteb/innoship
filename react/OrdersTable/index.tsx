@@ -48,7 +48,8 @@ const messages = defineMessages({
   showRows: {id: 'admin/order.show-rows'},
   of: {id: 'admin/order.of'},
   actions: {id: 'admin/order.actions'},
-  updateAwbStatus: {id: 'admin/order.update-awb-status'}
+  updateAwbStatus: {id: 'admin/order.update-awb-status'},
+  updateAwbCouriers: {id: 'admin.app.shipping-awb-couriers-settings'}
 })
 const initialState = {
   items: [],
@@ -642,8 +643,8 @@ class OrdersTable extends Component<any, any> {
             <Button
               size="small"
               variation="primary"
-              href="/admin/shipping/couriers" target="_blank"
-            >AWB Carriers Settings
+              href="/admin/app/shipping/couriers"
+            >{formatMessage({id: messages.updateAwbCouriers.id})}
             </Button>
           </div>
           <div className={`ma3`}>
@@ -702,7 +703,7 @@ class OrdersTable extends Component<any, any> {
           items={this.state.items}
           schema={this.getSchema()}
           onRowClick={({rowData}) => {
-            window.open(`/admin/shipping/order/${rowData.orderId}`)
+            window.location.replace(`/admin/app/shipping/order/${rowData.orderId}`)
           }}
           toolbar={{
             inputSearch: {

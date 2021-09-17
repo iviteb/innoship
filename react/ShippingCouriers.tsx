@@ -13,6 +13,7 @@ import {
 const messages = defineMessages({
   save: {id: 'admin/order.save'},
   awb: {id: 'admin.app.shipping-awb-couriers'},
+  shippingList: { id: "admin/shipping-list.navigation.label" }
 });
 
 function FormattedMessageFixed(props) {
@@ -27,7 +28,8 @@ class ShippingCouriers extends Component<any, any> {
       couriers: [],
       checkedCouriers: {},
       saving: false,
-      carriers: {}
+      carriers: {},
+      chunkedCarriers: []
     }
   }
 
@@ -76,7 +78,16 @@ class ShippingCouriers extends Component<any, any> {
     await fetch('/innoship/get-couriers')
       .then(res => res.json())
       .then(json => {
-        this.setState({ couriers: json })
+        let sortedJson = json.sort((a, b) => (a.courier > b.courier ? 1 : -1));
+
+        let i,j
+        let chunkedArrays = [] as any
+        const chunk = Math.ceil(sortedJson.length / 3)
+        for (i = 0,j = sortedJson.length; i < j; i += chunk) {
+          chunkedArrays.push(sortedJson.slice(i, i + chunk));
+        }
+
+        this.setState({ couriers: sortedJson, chunkedCarriers: chunkedArrays })
       })
     await fetch('/innoship/get-saved-couriers')
       .then(res => res.json())
@@ -90,34 +101,40 @@ class ShippingCouriers extends Component<any, any> {
   }
 
   public render() {
-    const { couriers } = this.state
+    const { chunkedCarriers } = this.state
     return (
-      <Layout>
+      <Layout pageHeader={
+        <PageHeader
+          linkLabel={<FormattedMessageFixed id={messages.shippingList.id}/>}
+          onLinkClick={() => {
+            window.location.replace(`/admin/app/shipping/shipping-list`)
+          }}
+        />
+      }>
         <div className={`pa6 ${styles.flex05}`}>
           <Box title={<FormattedMessageFixed id={messages.awb.id}/>}>
-            <div className="mb3">
-              <Button
-                size="small"
-                variation="primary"
-                isLoading={this.state.saving}
-                onClick={() => this.saveSettings()}
-              ><FormattedMessageFixed id={messages.save.id}/>
-              </Button>
-            </div>
-            {couriers.map((item, i) => {
-              return (
-                <div key={i} className="mb3">
-                  <Checkbox
-                    checked={this.isChecked(item.courierId)}
-                    id={item.courierId}
-                    label={item.courier}
-                    name="default-checkbox-group"
-                    onChange={() => this.toggleChecked(item.courierId)}
-                    value="option-0"
-                  />
+            <div className={`flex flex-row ${styles.flex06}`}>
+              {chunkedCarriers.map((column, c) => {
+                return (
+                  <div key={c} className={`mb3 ${styles.flex03}`}>
+                    {column.map((item, i) => {
+                    return (
+                      <div key={c+i} className="mb3">
+                        <Checkbox
+                          checked={this.isChecked(item.courierId)}
+                          id={item.courierId}
+                          label={item.courier}
+                          name="default-checkbox-group"
+                          onChange={() => this.toggleChecked(item.courierId)}
+                          value="option-0"
+                        />
+                      </div>
+                    )
+                  })}
                 </div>
-              )
-            })}
+                )
+              })}
+            </div>
             <div className="mb3">
               <Button
                 size="small"
