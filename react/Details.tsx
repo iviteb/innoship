@@ -163,6 +163,7 @@ export default class Details extends Component<any, any> {
             logError={this.logOrderError}
             order={this.state.order}
             intl={this.props.intl}
+            showToast={this.props.showToast}
           />
         </div>
         <div className={`flex flex-column ${styles.flex04}`}>

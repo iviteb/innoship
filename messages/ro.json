@@ -73,9 +73,15 @@
   "admin/order.turn-off-auto-update": "Dezactivati actualizarea automata AWB",
   "admin/order.turn-on-auto-update": "Activati actualizarea automata AWB",
   "admin/order.clear-filters": "Resetati",
-  "admin/order.status": "Status",
+  "admin/order.idColumn": "Comanda #",
+  "admin/order.status": "Status comanda",
   "admin/order.payment": "Plata",
   "admin/order.receiver": "Destinatar",
   "admin/order.tracking-number-is": "Numarul de urmarire este:",
-  "admin/order.print-label": "Printeaza eticheta"
+  "admin/order.print-label": "Printeaza eticheta",
+  "admin/order.no-data": "Nu exista date",
+  "admin/orderLabel.no-data": "Nu exista date noi",
+  "admin/orderLabel.fetching-data": "Preluam informatiile",
+  "admin/orderLabel.get-label": "Preluam eticheta",
+  "admin/orderLabel.not-available": "Eticheta nu este disponibila"
 }

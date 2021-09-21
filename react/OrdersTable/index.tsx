@@ -6,6 +6,7 @@ import {
   Tag,
   Spinner,
   Button,
+  Toggle
 } from 'vtex.styleguide'
 import {FormattedCurrency} from 'vtex.format-currency'
 import PropTypes from 'prop-types'
@@ -20,6 +21,7 @@ function FormattedMessageFixed(props) {
 }
 
 const messages = defineMessages({
+  idColumn: {id: "admin/order.idColumn"},
   searchBy: {id: "admin/order.search-by"},
   requestAwb: {id: "admin/order.request-awb"},
   date: {id: 'admin/order.date'},
@@ -48,7 +50,8 @@ const messages = defineMessages({
   showRows: {id: 'admin/order.show-rows'},
   of: {id: 'admin/order.of'},
   actions: {id: 'admin/order.actions'},
-  updateAwbStatus: {id: 'admin/order.update-awb-status'}
+  updateAwbStatus: {id: 'admin/order.update-awb-status'},
+  noData: {id: 'admin/order.no-data'},
 })
 const initialState = {
   items: [],
@@ -127,17 +130,10 @@ class OrdersTable extends Component<any, any> {
     return fetch('/innoship/scheduler')
       .then(res => res.json())
       .then(json => {
-        if (json.hasOwnProperty('response')) {
-          this.setState({
-            awbAutoUpdateEnabled: false,
-            awbAutoUpdateLoading: false,
-          })
-        } else {
-          this.setState({
-            awbAutoUpdateEnabled: true,
-            awbAutoUpdateLoading: false,
-          })
-        }
+        this.setState({
+          awbAutoUpdateEnabled: !json.hasOwnProperty('response'),
+          awbAutoUpdateLoading: false,
+        })
       })
   }
 
@@ -199,7 +195,7 @@ class OrdersTable extends Component<any, any> {
     }
   }
 
-  getAWBHistory(order) {
+  async getAWBHistory(order) {
     const {courier, trackingNumber, invoiceNumber, orderId} = order;
 
     if (!courier || !trackingNumber || !invoiceNumber) {
@@ -404,7 +400,7 @@ class OrdersTable extends Component<any, any> {
                   }
 
                   invoiceNumber = packageItem.invoiceNumber ?? null
-                  trackingNumber = packageItem.trackingNumber ?? null
+                    trackingNumber = packageItem.trackingNumber ?? null
 
                   if (packageItem.courier) {
                     const reverseCourier = Object.assign(
@@ -474,7 +470,8 @@ class OrdersTable extends Component<any, any> {
     return {
       properties: {
         orderId: {
-          title: '#',
+          title: (formatMessage({id: messages.idColumn.id})),
+          width: 200,
         },
         creationDate: {
           title: (formatMessage({id: messages.date.id})),
@@ -484,6 +481,7 @@ class OrdersTable extends Component<any, any> {
         },
         totalValue: {
           title: (formatMessage({id: messages.shippingTotal.id})),
+          width: 150,
           cellRenderer: ({cellData, rowData}) => {
             const data = this.state.async.filter(function (item) {
               return item.orderId === rowData.orderId
@@ -505,19 +503,33 @@ class OrdersTable extends Component<any, any> {
         ShippingEstimatedDateMax: {
           title: (formatMessage({id: messages.shippingEstimate.id})),
           cellRenderer: ({cellData}) => {
-            return !cellData ? 'n/a' : new Intl.DateTimeFormat('en-GB').format(new Date(cellData))
+            return !cellData ? (<Tag key={cellData} bgColor="gray" color="#fff">{formatMessage({id: messages.noData.id})}</Tag>) : new Intl.DateTimeFormat('en-GB').format(new Date(cellData))
           },
+          width: 200
         },
         clientName: {
           title: (formatMessage({id: messages.receiver.id})),
+          width: 250
         },
         paymentNames: {
           title: (formatMessage({id: messages.payment.id})),
         },
         status: {
           title: (formatMessage({id: messages.status.id})),
+          width: 200,
           cellRenderer: ({cellData, rowData}) => {
-            let tagColor = cellData === 'invoiced' ? 'blue' : 'green';
+            let tagColor = 'green';
+            if(cellData === 'invoiced') {
+              tagColor = 'blue';
+            } else if (cellData === 'ready-for-handling') {
+              tagColor = '#00b300';
+            } else if (cellData === 'payment-pending') {
+              tagColor = '#b3b3b3'
+            } else if (cellData === 'canceled') {
+              tagColor = '#ff0000'
+            } else if (cellData === 'payment-approved') {
+              tagColor = '#1aa3ff'
+            }
             let extraMessage;
 
             const data = this.state.async.filter(function (item) {
@@ -547,13 +559,20 @@ class OrdersTable extends Component<any, any> {
         },
         awbStatus: {
           title: (formatMessage({id: messages.awbStatus.id})),
+          width: 200,
           cellRenderer: ({cellData, rowData}) => {
             const data = this.state.async.filter(function (item) {
               return item.orderId === rowData.orderId
             });
             const message = (data.length && data[0].awbStatus) ? data[0].awbStatus : null
 
-            return message ? (<Tag key={cellData} bgColor="blue" color="#fff">{message}</Tag>) : (<Spinner size={15}/>)
+            if(message) {
+              return message !== 'n/a' ?
+                (<Tag key={cellData} bgColor="blue" color="#fff">{message}</Tag>) :
+                <Tag key={cellData} bgColor="gray" color="#fff">{formatMessage({id: messages.noData.id})}</Tag>
+            }
+
+            return <Spinner size={15}/>
 
           },
         },
@@ -629,29 +648,24 @@ class OrdersTable extends Component<any, any> {
       <div>
         <div className={`flex justify-end`}>
           <div className={`ma3`}>
-            <Button
-              size="small"
-              variation={awbAutoUpdateEnabled ? 'primary' : 'danger'}
-              isLoading={awbAutoUpdateLoading}
-              onClick={() => this.toggleAWBUpdate()}
-            >
-              {awbAutoUpdateEnabled
-                ? formatMessage({id: messages.offAutoUpdate.id})
-                : formatMessage({id: messages.onAutoUpdate.id})}
-            </Button>
+            <Toggle
+              label={awbAutoUpdateEnabled ? formatMessage({id: messages.offAutoUpdate.id}) : formatMessage({id: messages.onAutoUpdate.id})}
+              checked={awbAutoUpdateEnabled}
+              onChange={() => {this.toggleAWBUpdate()}}
+            />
           </div>
         </div>
         <div className={`flex items-center ${styles.tableHeaderButtons}`}>
           {this.hasFiltersApplied() && (
-              <div className={`ma3`}>
-                <ButtonWithIcon
-                  variation="secondary"
-                  size="small"
-                  onClick={() => this.handleResetFilters()}
-                >
-                  {formatMessage({id: messages.clearFilters.id})}
-                </ButtonWithIcon>
-              </div>
+            <div className={`ma3`}>
+              <ButtonWithIcon
+                variation="secondary"
+                size="small"
+                onClick={() => this.handleResetFilters()}
+              >
+                {formatMessage({id: messages.clearFilters.id})}
+              </ButtonWithIcon>
+            </div>
           )}
           <div className={`ma3`}>
             <ActionMenu

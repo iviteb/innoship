@@ -12,8 +12,6 @@ vtex install vtex.innoship
 
 Open the app settings on your store admin - `https://{{accountName}}.myvtex.com/admin/apps` - click on the InnoShip app and fill in the:
 * `InnoShip API TOKEN` (required) - provided by the Innoship platform
-* `App Key` (optional) - the store's `VTEX App Key`, used only if you activate the `AWB AUTO-UPDATE` feature
-* `App Token` (optional) - the store's `VTEX App Token`, used only if you activate the `AWB AUTO-UPDATE` feature
 
 You will also need to link your store's warehouses to your innoship account.
 
@@ -93,8 +91,7 @@ and under `Pickup points tags` select the `innoship pickup` tag.
 
 ### 5. Periodic Innoship AWB updates
 
-First make sure you set the correct `App Key` and `App Token` in the app setting.<br>
-Then turn on the `AWB AUTO-UPDATE` feature in the `Shipping` page.
+Turn on the `AWB AUTO-UPDATE` feature in the `Shipping` page.
 The update will run every 4 hours.
 
 ![p5](assets/p5.PNG)
