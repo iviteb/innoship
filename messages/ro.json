@@ -83,5 +83,7 @@
   "admin/orderLabel.no-data": "Nu exista date noi",
   "admin/orderLabel.fetching-data": "Preluam informatiile",
   "admin/orderLabel.get-label": "Preluam eticheta",
-  "admin/orderLabel.not-available": "Eticheta nu este disponibila"
+  "admin/orderLabel.not-available": "Eticheta nu este disponibila",
+  "admin/order.filters-all": "Toate",
+  "admin/order.filters-none": "Niciuna"
 }

@@ -83,5 +83,7 @@
   "admin/orderLabel.no-data": "No data",
   "admin/orderLabel.fetching-data": "Fetching data",
   "admin/orderLabel.get-label": "Getting label",
-  "admin/orderLabel.not-available": "Label not available"
+  "admin/orderLabel.not-available": "Label not available",
+  "admin/order.filters-all": "All",
+  "admin/order.filters-none": "None"
 }
