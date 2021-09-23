@@ -65,16 +65,16 @@ const messages = defineMessages({
   skuRefCode: {id: 'admin/order.sku-ref-code'},
   weight: {id: 'admin/order.weight'},
   moreDetails: {id: 'admin/order.more-details'},
-  shippingTotal: {id: 'admin/order.shipping-total'},
-  giftCard: {id: 'admin/order.gift-card'},
-  totalOrderValue: {id: 'admin/order.total-order-value'},
-  shippingInformation: {id: 'admin/order.shipping-information'},
-  client: {id: 'admin/order.client'},
-  phone: {id: 'admin/order.phone'},
-  shippingStatus: {id: 'admin/order.shipping-status'},
-  theOrderIs: {id: 'admin/order.the-order-is'},
-  close: {id: 'admin/order.close'},
-  errors: {id: 'admin/order.errors'},
+  shippingTotal: {id: 'admin/order.shipping-total' },
+  giftCard: {id: 'admin/order.gift-card' },
+  totalOrderValue: {id: 'admin/order.total-order-value' },
+  shippingInformation: {id: 'admin/order.shipping-information' },
+  client: {id: 'admin/order.client' },
+  phone: {id: 'admin/order.phone' },
+  shippingStatus: {id: 'admin/order.shipping-status' },
+  theOrderIs: {id: 'admin/order.the-order-is' },
+  close: {id: 'admin/order.close' },
+  errors: {id: 'admin/order.errors' },
   labelNoData: {id: 'admin/orderLabel.no-data'},
   labelFetchingData: {id: 'admin/orderLabel.fetching-data'},
   labelGetLabel: {id: 'admin/orderLabel.get-label'},
@@ -117,6 +117,7 @@ class OrderDetails extends Component<any, any> {
       canSubmit: true,
       parcelWeightsErrors: [],
       collapsibles: {},
+      carriers: {},
     };
 
     this.handleOrder = this.handleOrder.bind(this);
@@ -148,6 +149,18 @@ class OrderDetails extends Component<any, any> {
 
   showToast(message) {
     this.props.showToast({ message, horizontalPosition: 'right', duration: 3000, })
+  }
+
+  async initCouriers() {
+    await fetch('/innoship/get-couriers')
+      .then(res => res.json())
+      .then(json => {
+        let carriers = {}
+        json.map(item => {
+          carriers[item.courierId] = item.courier
+        })
+        this.setState({ carriers })
+      })
   }
 
   collapse(itemId, state) {
@@ -549,9 +562,10 @@ class OrderDetails extends Component<any, any> {
     }
   }
 
-  componentDidMount() {
-    this.initOrderChangesAndDiscounts();
+  async componentDidMount() {
+    await this.initOrderChangesAndDiscounts();
     this.initOrderWeight()
+    await this.initCouriers()
   }
 
   async getOrder() {
@@ -616,7 +630,7 @@ class OrderDetails extends Component<any, any> {
     this.setState({posted: true});
     let courier = null;
     let trackingNumber = null;
-    const {order} = this.state;
+    const { order, carriers } = this.state;
 
     if (order.packageAttachment.packages && order.packageAttachment.packages.length) {
       const packageItem = order.packageAttachment.packages[0];
@@ -629,10 +643,8 @@ class OrderDetails extends Component<any, any> {
       return
     }
 
-    const reverseCourier = Object.assign(
-      {},
-      ...Object.entries(settings.carriers).map(([a, b]) => ({[b]: a}))
-    );
+    // @ts-ignore
+    const reverseCourier = Object.assign({}, ...Object.entries(carriers).map(([a, b]) => ({ [b]: a })));
 
     const payload = {
       courier: reverseCourier[courier],
@@ -677,7 +689,7 @@ class OrderDetails extends Component<any, any> {
   }
 
   async updateInvoice() {
-    const {order} = this.state;
+    const { order, carriers } = this.state;
     let invoiceNumber = null;
     let trackingNumber = null;
 
@@ -698,7 +710,7 @@ class OrderDetails extends Component<any, any> {
         const data = {
           trackingNumber: awb.courierShipmentId,
           trackingUrl: awb.trackPageUrl,
-          courier: settings.carriers[awb.courier],
+          courier: carriers[awb.courier],
           dispatchedDate: awb.calculatedDeliveryDate,
         };
 
@@ -802,7 +814,7 @@ class OrderDetails extends Component<any, any> {
   printAWB(event) {
     let courier = null;
     let trackingNumber = null;
-    const {order, format} = this.state;
+    const { order, format, carriers } = this.state;
     const { formatMessage } = this.props.intl;
 
     this.showToast(formatMessage({id: messages.labelGetLabel.id}))
@@ -817,6 +829,11 @@ class OrderDetails extends Component<any, any> {
       courier = packageItem.courier
     }
 
+    if (!courier || !trackingNumber) {
+      return
+    }
+
+    // @ts-ignore
     const reverseCourier = Object.assign(
       {},
       ...Object.entries(settings.carriers).map(([a, b]) => ({[b]: a}))

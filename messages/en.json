@@ -85,5 +85,8 @@
   "admin/orderLabel.get-label": "Getting label",
   "admin/orderLabel.not-available": "Label not available",
   "admin/order.filters-all": "All",
-  "admin/order.filters-none": "None"
+  "admin/order.filters-none": "None",
+  "admin.app.shipping-couriers": "Couriers",
+  "admin.app.shipping-awb-couriers": "Automatic AWB update only for the following carriers",
+  "admin.app.shipping-awb-couriers-settings": "AWB Carriers Settings"
 }

@@ -12,12 +12,13 @@ import {
   updateAWBs,
 } from './middlewares/events/service'
 import {
-  getLabel,
+  getCouriers,
+  getLabel, getSavedCouriers,
   innoshipFixedLocations,
   innoshipSettings,
   requestAwb,
   requestAwbHistory,
-  requestPriceRates,
+  requestPriceRates, saveCouriers,
 } from './middlewares/innoship'
 
 const TIMEOUT_MS = 10 * 1000
@@ -99,6 +100,15 @@ export default new Service({
     }),
     getProductVariation: method({
       GET: getProductVariation,
+    }),
+    getCouriers: method({
+      GET: getCouriers,
+    }),
+    saveCouriers: method({
+      POST: saveCouriers,
+    }),
+    getSavedCouriers: method({
+      GET: getSavedCouriers,
     }),
   },
 })

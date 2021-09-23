@@ -78,7 +78,7 @@
   "admin/order.receiver": "admin/order.receiver",
   "admin/order.tracking-number-is": "admin/order.tracking-number-is",
   "admin/order.print-label": "admin/order.print-label",
-  "admin/order.no-data": "admin/order.no-data",
-  "admin/orderLabel.no-data": "admin/orderLabel.no-data",
-  "admin/orderLabel.fetching-data": "admin/orderLabel.fetching-data"
+  "admin.app.shipping-couriers": "admin.app.shipping-couriers",
+  "admin.app.shipping-awb-couriers": "admin.app.shipping-awb-couriers",
+  "admin.app.shipping-awb-couriers-settings": "admin.app.shipping-awb-couriers-settings"
 }

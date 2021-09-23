@@ -54,6 +54,18 @@
     "getProductVariation": {
       "path": "/catalog/product-variation/:productId",
       "public": true
+    },
+    "getCouriers": {
+      "path": "/innoship/get-couriers",
+      "public": true
+    },
+    "saveCouriers": {
+      "path": "/innoship/save-couriers",
+      "public": true
+    },
+    "getSavedCouriers": {
+      "path": "/innoship/get-saved-couriers",
+      "public": true
     }
   }
 }

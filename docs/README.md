@@ -93,6 +93,7 @@ and under `Pickup points tags` select the `innoship pickup` tag.
 
 Turn on the `AWB AUTO-UPDATE` feature in the `Shipping` page.
 The update will run every 4 hours.
+You can configure which carriers will be included in this update by accessing the `AWB CARRIERS SETTINGS`.
 
 ![p5](assets/p5.PNG)
 
