@@ -95,7 +95,8 @@ and under `Pickup points tags` select the `innoship pickup` tag.
 
 First make sure you set the correct `App Key` and `App Token` in the app setting.<br>
 Then turn on the `AWB AUTO-UPDATE` feature in the `Shipping` page.
-The update will run every 4 hours.
+The update will run every 4 hours.<br>
+You can configure which carriers will be included in this update by accessing the `AWB CARRIERS SETTINGS`.
 
 ![p5](assets/p5.PNG)
 

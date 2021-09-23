@@ -48,7 +48,8 @@ const messages = defineMessages({
   showRows: {id: 'admin/order.show-rows'},
   of: {id: 'admin/order.of'},
   actions: {id: 'admin/order.actions'},
-  updateAwbStatus: {id: 'admin/order.update-awb-status'}
+  updateAwbStatus: {id: 'admin/order.update-awb-status'},
+  updateAwbCouriers: {id: 'admin.app.shipping-awb-couriers-settings'}
 })
 const initialState = {
   items: [],
@@ -70,6 +71,7 @@ const initialState = {
   bulkActionsProcessed: 0,
   awbAutoUpdateEnabled: false,
   awbAutoUpdateLoading: false,
+  carriers: {}
 };
 
 class OrdersTable extends Component<any, any> {
@@ -347,7 +349,7 @@ class OrdersTable extends Component<any, any> {
 
   getItems() {
     this.setState({tableIsLoading: true});
-    const {paging, f_shippingEstimate, f_status, searchValue} = this.state;
+    const {paging, f_shippingEstimate, f_status, searchValue, carriers} = this.state;
     let url = `/api/oms/pvt/orders?f_creationdate&page=${
       paging.currentPage
     }&per_page=${paging.perPage}&_=${Date.now()}`;
@@ -407,12 +409,8 @@ class OrdersTable extends Component<any, any> {
                   trackingNumber = packageItem.trackingNumber ?? null
 
                   if (packageItem.courier) {
-                    const reverseCourier = Object.assign(
-                      {},
-                      ...Object.entries(settings.carriers).map(([a, b]) => ({
-                        [b]: a,
-                      }))
-                    );
+                    // @ts-ignore
+                    const reverseCourier = Object.assign({}, ...Object.entries(carriers).map(([a, b]) => ({[b]: a,})));
 
                     courier = reverseCourier[packageItem.courier]
                   }
@@ -464,9 +462,22 @@ class OrdersTable extends Component<any, any> {
     }
   }
 
-  componentDidMount() {
+  async initCouriers() {
+    await fetch('/innoship/get-couriers')
+      .then(res => res.json())
+      .then(json => {
+        let carriers = {}
+        json.map(item => {
+          carriers[item.courierId] = item.courier
+        })
+        this.setState({ carriers })
+      })
+  }
+
+  async componentDidMount() {
     this.getItems();
-    this.initAwbAutoUpdate()
+    await this.initAwbAutoUpdate()
+    await this.initCouriers()
   }
 
   private getSchema() {
@@ -631,6 +642,14 @@ class OrdersTable extends Component<any, any> {
           <div className={`ma3`}>
             <Button
               size="small"
+              variation="primary"
+              href="/admin/app/shipping/couriers"
+            >{formatMessage({id: messages.updateAwbCouriers.id})}
+            </Button>
+          </div>
+          <div className={`ma3`}>
+            <Button
+              size="small"
               variation={awbAutoUpdateEnabled ? 'primary' : 'danger'}
               isLoading={awbAutoUpdateLoading}
               onClick={() => this.toggleAWBUpdate()}
@@ -684,7 +703,7 @@ class OrdersTable extends Component<any, any> {
           items={this.state.items}
           schema={this.getSchema()}
           onRowClick={({rowData}) => {
-            window.open(`/admin/shipping/order/${rowData.orderId}`)
+            window.location.replace(`/admin/app/shipping/order/${rowData.orderId}`)
           }}
           toolbar={{
             inputSearch: {

@@ -74,6 +74,7 @@ const messages = defineMessages({
   theOrderIs: {id: 'admin/order.the-order-is' },
   close: {id: 'admin/order.close' },
   errors: {id: 'admin/order.errors' },
+  carriers: {}
 });
 
 function FormattedMessageFixed(props) {
@@ -138,6 +139,18 @@ class OrderDetails extends Component<any, any> {
     this.createOrderPayload = this.createOrderPayload.bind(this);
 
     this.collapse = this.collapse.bind(this)
+  }
+
+  async initCouriers() {
+    await fetch('/innoship/get-couriers')
+      .then(res => res.json())
+      .then(json => {
+        let carriers = {}
+        json.map(item => {
+          carriers[item.courierId] = item.courier
+        })
+        this.setState({ carriers })
+      })
   }
 
   collapse(itemId, state) {
@@ -564,9 +577,10 @@ class OrderDetails extends Component<any, any> {
     }
   }
 
-  componentDidMount() {
-    this.initOrderChangesAndDiscounts();
+  async componentDidMount() {
+    await this.initOrderChangesAndDiscounts();
     this.initOrderWeight()
+    await this.initCouriers()
   }
 
   async getOrder() {
@@ -629,7 +643,7 @@ class OrderDetails extends Component<any, any> {
     this.setState({ posted: true });
     let courier = null;
     let trackingNumber = null;
-    const { order } = this.state;
+    const { order, carriers } = this.state;
 
     if (order.packageAttachment.packages && order.packageAttachment.packages.length) {
       const packageItem = order.packageAttachment.packages[0];
@@ -642,10 +656,8 @@ class OrderDetails extends Component<any, any> {
       return
     }
 
-    const reverseCourier = Object.assign(
-      {},
-      ...Object.entries(settings.carriers).map(([a, b]) => ({ [b]: a }))
-    );
+    // @ts-ignore
+    const reverseCourier = Object.assign({}, ...Object.entries(carriers).map(([a, b]) => ({ [b]: a })));
 
     const payload = {
       courier: reverseCourier[courier],
@@ -690,7 +702,7 @@ class OrderDetails extends Component<any, any> {
   }
 
   async updateInvoice() {
-    const { order } = this.state;
+    const { order, carriers } = this.state;
     let invoiceNumber = null;
     let trackingNumber = null;
 
@@ -711,7 +723,7 @@ class OrderDetails extends Component<any, any> {
         const data = {
           trackingNumber: awb.courierShipmentId,
           trackingUrl: awb.trackPageUrl,
-          courier: settings.carriers[awb.courier],
+          courier: carriers[awb.courier],
           dispatchedDate: awb.calculatedDeliveryDate,
         };
 
@@ -815,7 +827,7 @@ class OrderDetails extends Component<any, any> {
   printAWB(event) {
     let courier = null;
     let trackingNumber = null;
-    const { order, format } = this.state;
+    const { order, format, carriers } = this.state;
 
     if (
       order.packageAttachment.packages &&
@@ -831,10 +843,8 @@ class OrderDetails extends Component<any, any> {
       return
     }
 
-    const reverseCourier = Object.assign(
-      {},
-      ...Object.entries(settings.carriers).map(([a, b]) => ({ [b]: a }))
-    );
+    // @ts-ignore
+    const reverseCourier = Object.assign({}, ...Object.entries(carriers).map(([a, b]) => ({ [b]: a })));
 
     axios
       .get(
