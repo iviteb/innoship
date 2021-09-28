@@ -2,10 +2,10 @@ import React, {Component} from 'react'
 import {
   Table,
   ActionMenu,
-  ButtonWithIcon,
   Tag,
   Spinner,
-  Button,
+  Checkbox,
+  Toggle
 } from 'vtex.styleguide'
 import {FormattedCurrency} from 'vtex.format-currency'
 import PropTypes from 'prop-types'
@@ -13,13 +13,14 @@ import {defineMessages, FormattedMessage} from 'react-intl'
 
 import settings from '../settings'
 import styles from '../style.css'
-import {canceledStatus, requestHeaders} from "../utils/constants";
+import {allFilterStatuses, allShippingEstimates, canceledStatus, requestHeaders} from "../utils/constants";
 
 function FormattedMessageFixed(props) {
   return <FormattedMessage {...props} />
 }
 
 const messages = defineMessages({
+  idColumn: {id: "admin/order.idColumn"},
   searchBy: {id: "admin/order.search-by"},
   requestAwb: {id: "admin/order.request-awb"},
   date: {id: 'admin/order.date'},
@@ -29,27 +30,30 @@ const messages = defineMessages({
   payment: {id: 'admin/order.payment'},
   status: {id: 'admin/order.status'},
   awbStatus: {id: 'admin/order.awb-status'},
-  waitingAuth: { id: 'admin/order.status.waiting-ffmt-authorization'},
-  paymentPending: { id: 'admin/order.status.payment-pending'},
-  paymentApproved: { id: 'admin/order.status.payment-approved'},
-  readyForHandling: { id: 'admin/order.status.ready-for-handling'},
-  handling: { id: 'admin/order.status.handling'},
-  invoiced: { id: 'admin/order.status.invoiced'},
-  canceled: { id: 'admin/order.status.canceled'},
-  windowToCancel: { id: 'admin/order.status.window-to-cancel'},
-  nextDays: { id: 'admin/order.next-days'},
-  tomorrow: { id: 'admin/order.tomorrow'},
-  today: { id: 'admin/order.today'},
-  late: { id: 'admin/order.late'},
-  offAutoUpdate: { id: 'admin/order.turn-off-auto-update'},
-  onAutoUpdate: { id: 'admin/order.turn-on-auto-update'},
+  waitingAuth: {id: 'admin/order.status.waiting-ffmt-authorization'},
+  paymentPending: {id: 'admin/order.status.payment-pending'},
+  paymentApproved: {id: 'admin/order.status.payment-approved'},
+  readyForHandling: {id: 'admin/order.status.ready-for-handling'},
+  handling: {id: 'admin/order.status.handling'},
+  invoiced: {id: 'admin/order.status.invoiced'},
+  canceled: {id: 'admin/order.status.canceled'},
+  windowToCancel: {id: 'admin/order.status.window-to-cancel'},
+  nextDays: {id: 'admin/order.next-days'},
+  tomorrow: {id: 'admin/order.tomorrow'},
+  today: {id: 'admin/order.today'},
+  late: {id: 'admin/order.late'},
+  offAutoUpdate: {id: 'admin/order.turn-off-auto-update'},
+  onAutoUpdate: {id: 'admin/order.turn-on-auto-update'},
   clearFilters: {id: 'admin/order.clear-filters'},
-  filterStatus: { id: 'admin/order.filter-status'},
+  filterStatus: {id: 'admin/order.filter-status'},
   showRows: {id: 'admin/order.show-rows'},
   of: {id: 'admin/order.of'},
   actions: {id: 'admin/order.actions'},
   updateAwbStatus: {id: 'admin/order.update-awb-status'},
-  updateAwbCouriers: {id: 'admin.app.shipping-awb-couriers-settings'}
+  updateAwbCouriers: {id: 'admin.app.shipping-awb-couriers-settings'},
+  noData: {id: 'admin/order.no-data'},
+  allFilters: {id: 'admin/order.filters-all'},
+  noneFilters: {id: 'admin/order.filters-none'},
 })
 const initialState = {
   items: [],
@@ -71,12 +75,14 @@ const initialState = {
   bulkActionsProcessed: 0,
   awbAutoUpdateEnabled: false,
   awbAutoUpdateLoading: false,
-  carriers: {}
+  carriers: {},
+  filterStatements: [],
 };
 
 class OrdersTable extends Component<any, any> {
   static propTypes = {
     intl: PropTypes.object,
+    navigate: PropTypes.func
   };
 
   constructor(props: any) {
@@ -97,6 +103,9 @@ class OrdersTable extends Component<any, any> {
     this.getAWBHistory = this.getAWBHistory.bind(this);
     this.updateAWBStatus = this.updateAWBStatus.bind(this);
     this.toggleAWBUpdate = this.toggleAWBUpdate.bind(this)
+    this.handleFiltersChange = this.handleFiltersChange.bind(this)
+    this.orderStatusSelectorObject = this.orderStatusSelectorObject.bind(this)
+    this.shippingEstimateSelectorObject = this.shippingEstimateSelectorObject.bind(this)
   }
 
   toggleAWBUpdate() {
@@ -129,17 +138,10 @@ class OrdersTable extends Component<any, any> {
     return fetch('/innoship/scheduler')
       .then(res => res.json())
       .then(json => {
-        if (json.hasOwnProperty('response')) {
-          this.setState({
-            awbAutoUpdateEnabled: false,
-            awbAutoUpdateLoading: false,
-          })
-        } else {
-          this.setState({
-            awbAutoUpdateEnabled: true,
-            awbAutoUpdateLoading: false,
-          })
-        }
+        this.setState({
+          awbAutoUpdateEnabled: !json.hasOwnProperty('response'),
+          awbAutoUpdateLoading: false,
+        })
       })
   }
 
@@ -201,7 +203,7 @@ class OrdersTable extends Component<any, any> {
     }
   }
 
-  getAWBHistory(order) {
+  async getAWBHistory(order) {
     const {courier, trackingNumber, invoiceNumber, orderId} = order;
 
     if (!courier || !trackingNumber || !invoiceNumber) {
@@ -275,14 +277,6 @@ class OrdersTable extends Component<any, any> {
         currentItemFrom: 1,
       },
       this.getItems
-    )
-  }
-
-  hasFiltersApplied() {
-    const {f_status, f_shippingEstimate, searchValue} = this.state;
-
-    return (
-      f_status !== null || f_shippingEstimate !== null || searchValue !== ''
     )
   }
 
@@ -485,7 +479,8 @@ class OrdersTable extends Component<any, any> {
     return {
       properties: {
         orderId: {
-          title: '#',
+          title: (formatMessage({id: messages.idColumn.id})),
+          width: 200,
         },
         creationDate: {
           title: (formatMessage({id: messages.date.id})),
@@ -495,6 +490,7 @@ class OrdersTable extends Component<any, any> {
         },
         totalValue: {
           title: (formatMessage({id: messages.shippingTotal.id})),
+          width: 150,
           cellRenderer: ({cellData, rowData}) => {
             const data = this.state.async.filter(function (item) {
               return item.orderId === rowData.orderId
@@ -516,19 +512,34 @@ class OrdersTable extends Component<any, any> {
         ShippingEstimatedDateMax: {
           title: (formatMessage({id: messages.shippingEstimate.id})),
           cellRenderer: ({cellData}) => {
-            return !cellData ? 'n/a' : new Intl.DateTimeFormat('en-GB').format(new Date(cellData))
+            return !cellData ? (<Tag key={cellData} bgColor="gray"
+                                     color="#fff">{formatMessage({id: messages.noData.id})}</Tag>) : new Intl.DateTimeFormat('en-GB').format(new Date(cellData))
           },
+          width: 200
         },
         clientName: {
           title: (formatMessage({id: messages.receiver.id})),
+          width: 250
         },
         paymentNames: {
           title: (formatMessage({id: messages.payment.id})),
         },
         status: {
           title: (formatMessage({id: messages.status.id})),
+          width: 200,
           cellRenderer: ({cellData, rowData}) => {
-            let tagColor = cellData === 'invoiced' ? 'blue' : 'green';
+            let tagColor = 'green';
+            if (cellData === 'invoiced') {
+              tagColor = 'blue';
+            } else if (cellData === 'ready-for-handling') {
+              tagColor = '#00b300';
+            } else if (cellData === 'payment-pending') {
+              tagColor = '#b3b3b3'
+            } else if (cellData === 'canceled') {
+              tagColor = '#ff0000'
+            } else if (cellData === 'payment-approved') {
+              tagColor = '#1aa3ff'
+            }
             let extraMessage;
 
             const data = this.state.async.filter(function (item) {
@@ -543,7 +554,6 @@ class OrdersTable extends Component<any, any> {
             }
 
             const id = `admin/order.status.${cellData}`;
-
             if (data.length) {
               return (
                 <Tag bgColor={tagColor} color="#fff">
@@ -558,152 +568,193 @@ class OrdersTable extends Component<any, any> {
         },
         awbStatus: {
           title: (formatMessage({id: messages.awbStatus.id})),
+          width: 200,
           cellRenderer: ({cellData, rowData}) => {
             const data = this.state.async.filter(function (item) {
               return item.orderId === rowData.orderId
             });
             const message = (data.length && data[0].awbStatus) ? data[0].awbStatus : null
-
-            return message ? (<Tag key={cellData} bgColor="blue" color="#fff">{message}</Tag>) : (<Spinner size={15}/>)
-
+            if (message) {
+              return message !== 'n/a' ?
+                (<Tag key={cellData} bgColor="blue" color="#fff">{message}</Tag>) :
+                <Tag key={cellData} bgColor="gray" color="#fff">{formatMessage({id: messages.noData.id})}</Tag>
+            }
+            return <Spinner size={15}/>
           },
         },
       },
     }
   }
 
-  public getFilterStatusOptions() {
-    const {formatMessage} = this.props.intl;
-    return [
-      {
-        label: formatMessage({id: messages.waitingAuth.id}),
-        onClick: () => this.filterStatus('waiting-ffmt-authorization,on-order-completed-ffm,order-accepted'),
-      },
-      {
-        label: formatMessage({id: messages.paymentPending.id}),
-        onClick: () => this.filterStatus('payment-pending'),
-      },
-      {
-        label: formatMessage({id: messages.paymentApproved.id}),
-        onClick: () => this.filterStatus('payment-approved'),
-      },
-      {
-        label: formatMessage({id: messages.readyForHandling.id}),
-        onClick: () => this.filterStatus('ready-for-handling'),
-      },
-      {
-        label: formatMessage({id: messages.handling.id}),
-        onClick: () => this.filterStatus('handling'),
-      },
-      {
-        label: formatMessage({id: messages.invoiced.id}),
-        onClick: () => this.filterStatus('invoiced'),
-      },
-      {
-        label: formatMessage({id: messages.canceled.id}),
-        onClick: () => this.filterStatus('canceled'),
-      },
-      {
-        label: formatMessage({id: messages.windowToCancel.id}),
-        onClick: () => this.filterStatus('window-to-cancel'),
-      },
-    ]
+  public handleFiltersChange(statements = []) {
+
+    const {paging} = this.state;
+
+    let stateStatuses = '';
+    let stateEstimateShipping = '';
+    paging.currentPage = 1;
+
+    statements.forEach((st: any) => {
+
+      if (!st || !st.object) return
+      const { subject, object } = st
+      switch (subject) {
+        case 'orderStatus':
+          if (!object) return
+
+          if(Object.keys(object).length) {
+            const selectedStatuses : any[] = []
+            Object.keys(object).map(function(key) {
+              if(object[key]) {
+                selectedStatuses.push(allFilterStatuses[key])
+              }
+
+            });
+            stateStatuses = selectedStatuses.join(',')
+          }
+          break
+
+        case 'estimateShipping':
+          if (!object) return
+          if(Object.keys(object).length) {
+            const selectedOptions : any[] = []
+            Object.keys(object).map(function(key) {
+              if(object[key]) {
+                selectedOptions.push(allShippingEstimates[key])
+              }
+
+            });
+            stateEstimateShipping = selectedOptions.join(',')
+          }
+          break
+      }
+    });
+    this.setState({
+      filterStatements: statements,
+      f_status: stateStatuses,
+      f_shippingEstimate: stateEstimateShipping,
+      paging,
+      currentItemFrom: 1
+    }, this.getItems)
   }
 
-  public getShippingEstimateOptions(){
-    const {formatMessage} = this.props.intl
-    return [
-      {
-        label: formatMessage({id: messages.nextDays.id}),
-        onClick: () => this.filterShippingEstimate('7.days'),
-      },
-      {
-        label: formatMessage({id: messages.tomorrow.id}),
-        onClick: () => this.filterShippingEstimate('1.days'),
-      },
-      {
-        label: formatMessage({id: messages.today.id}),
-        onClick: () => this.filterShippingEstimate('0.days'),
-      },
-      {
-        label: formatMessage({id: messages.late.id}),
-        onClick: () => this.filterShippingEstimate('-1.days'),
-      },
-    ]
+  public orderStatusSelectorObject({
+                               values,
+                               onChangeObjectCallback,
+                             }) {
+    const {formatMessage} = this.props.intl;
+    const initialValue = {
+      waitingAuth: true,
+      paymentPending: true,
+      paymentApproved: true,
+      handling: true,
+      readyForHandling: true,
+      invoiced: true,
+      canceled: true,
+      windowToCancel: true,
+      ...(values || {}),
+    }
+    const toggleValueByKey = key => {
+      return {
+        ...(values || initialValue),
+        [key]: values ? !values[key] : false,
+      }
+    }
+
+    return (
+      <div>
+        {Object.keys(initialValue).map((opt, index) => {
+          return (
+            <div className="mb3" key={`class-statment-object-${opt}-${index}`}>
+              <Checkbox
+                checked={values ? values[opt] : initialValue[opt]}
+                label={`${formatMessage({id: messages[opt].id})}`}
+                name="default-checkbox-group"
+                onChange={() => {
+                  const newValue = toggleValueByKey(`${opt}`)
+                  const newValueKeys = Object.keys(newValue)
+                  const isEmptyFilter = !newValueKeys.some(
+                    key => !newValue[key]
+                  )
+                  onChangeObjectCallback(isEmptyFilter ? null : newValue)
+                }}
+                value={allFilterStatuses[opt]}
+              />
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  public shippingEstimateSelectorObject({
+                                          values,
+                                          onChangeObjectCallback,
+                                        }) {
+    const {formatMessage} = this.props.intl;
+    const initialValue = {
+      nextDays: false,
+      tomorrow: false,
+      today: false,
+      late: false,
+    }
+    const toggleValueByKey = key => {
+      return {
+        ...initialValue,
+        [key]: true,
+      }
+    }
+    return (
+      <div>
+        {Object.keys(initialValue).map((opt, index) => {
+          return (
+            <div className="mb3" key={`class-statment-object-${opt}-${index}`}>
+              <Checkbox
+                checked={values ? values[opt] : initialValue[opt]}
+                label={`${formatMessage({id: messages[opt].id})}`}
+                name="default-checkbox-group"
+                onChange={() => {
+                  const newValue = toggleValueByKey(`${opt}`)
+
+                  const newValueKeys = Object.keys(newValue)
+                  const isEmptyFilter = !newValueKeys.some(
+                    key => !newValue[key]
+                  )
+                  onChangeObjectCallback(isEmptyFilter ? null : newValue)
+                }}
+                value={allShippingEstimates[opt]}
+              />
+            </div>
+          )
+        })}
+      </div>
+    )
   }
 
   public render() {
-    const {paging, awbAutoUpdateEnabled, awbAutoUpdateLoading} = this.state;
+    const {paging, awbAutoUpdateEnabled} = this.state;
     const {formatMessage} = this.props.intl;
 
     return (
       <div>
         <div className={`flex justify-end`}>
           <div className={`ma3`}>
-            <Button
-              size="small"
-              variation="primary"
-              href="/admin/app/shipping/couriers"
-            >{formatMessage({id: messages.updateAwbCouriers.id})}
-            </Button>
-          </div>
-          <div className={`ma3`}>
-            <Button
-              size="small"
-              variation={awbAutoUpdateEnabled ? 'primary' : 'danger'}
-              isLoading={awbAutoUpdateLoading}
-              onClick={() => this.toggleAWBUpdate()}
-            >
-              {awbAutoUpdateEnabled
-                ? formatMessage({id: messages.offAutoUpdate.id})
-                : formatMessage({id: messages.onAutoUpdate.id})}
-            </Button>
-          </div>
-        </div>
-        <div className={`flex items-center ${styles.tableHeaderButtons}`}>
-          {this.hasFiltersApplied() && (
-              <div className={`ma3`}>
-                <ButtonWithIcon
-                  variation="secondary"
-                  size="small"
-                  onClick={() => this.handleResetFilters()}
-                >
-                  {formatMessage({id: messages.clearFilters.id})}
-                </ButtonWithIcon>
-              </div>
-          )}
-          <div className={`ma3`}>
-            <ActionMenu
-              label={formatMessage({id: messages.filterStatus.id})}
-              align="right"
-              buttonProps={{
-                variation: 'secondary',
-                size: 'small',
+            <Toggle
+              label={awbAutoUpdateEnabled ? formatMessage({id: messages.offAutoUpdate.id}) : formatMessage({id: messages.onAutoUpdate.id})}
+              checked={awbAutoUpdateEnabled}
+              onChange={() => {
+                this.toggleAWBUpdate()
               }}
-              options={this.getFilterStatusOptions()}
-            />
-          </div>
-          <div className={`ma3`}>
-            <ActionMenu
-              label={formatMessage({id: messages.shippingEstimate.id})}
-              align="right"
-              buttonProps={{
-                variation: 'secondary',
-                size: 'small',
-              }}
-              options={this.getShippingEstimateOptions()}
             />
           </div>
         </div>
-
-
         <Table
           fullWidth
           loading={this.state.tableIsLoading}
           items={this.state.items}
           schema={this.getSchema()}
           onRowClick={({rowData}) => {
-            window.location.replace(`/admin/app/shipping/order/${rowData.orderId}`)
+            this.props.navigate({to: `/admin/app/shipping/order/${rowData.orderId}`})
           }}
           toolbar={{
             inputSearch: {
@@ -733,6 +784,73 @@ class OrdersTable extends Component<any, any> {
             main: {
               label: (formatMessage({id: messages.updateAwbStatus.id})),
               handleCallback: params => this.updateAWB(params),
+            },
+          }}
+          filters={{
+            alwaysVisibleFilters: ['orderStatus', 'estimateShipping'],
+            statements: this.state.filterStatements,
+            onChangeStatements: this.handleFiltersChange,
+            clearAllFiltersButtonLabel: formatMessage({id: messages.clearFilters.id}),
+            collapseLeft: true,
+            options: {
+              orderStatus: {
+                label: formatMessage({id: messages.filterStatus.id}),
+                renderFilterLabel: st => {
+                  if (!st || !st.object) {
+                    return formatMessage({id: messages.allFilters.id})
+                  }
+                  const keys:any = st.object ? Object.keys(st.object) : {}
+                  const isAllTrue = !keys.some(key => !st.object[key])
+                  const isAllFalse = !keys.some(key => st.object[key])
+                  const trueKeys = keys.filter(key => st.object[key])
+                  let trueKeysLabel = ''
+                  trueKeys.forEach((key, index) => {
+                    trueKeysLabel += `${key}${
+                      index === trueKeys.length - 1 ? '' : ', '
+                    }`
+                  })
+                  return `${isAllTrue ? formatMessage({id: messages.allFilters.id}) : isAllFalse ? formatMessage({id: messages.noneFilters.id}) : `${trueKeysLabel}`}`
+                },
+                verbs: [
+                  {
+                    label: formatMessage({id: messages.filterStatus.id}),
+                    value: 'includes',
+                    object: {
+                      renderFn: this.orderStatusSelectorObject,
+                      extraParams: {},
+                    },
+                  },
+                ],
+              },
+              estimateShipping: {
+                label: formatMessage({id: messages.shippingEstimate.id}),
+                renderFilterLabel: st => {
+                  if (!st || !st.object) {
+                    return formatMessage({id: messages.allFilters.id})
+                  }
+                  const keys:any = st.object ? Object.keys(st.object) : {}
+                  const isAllTrue = !keys.some(key => !st.object[key])
+                  const isAllFalse = !keys.some(key => st.object[key])
+                  const trueKeys = keys.filter(key => st.object[key])
+                  let trueKeysLabel = ''
+                  trueKeys.forEach((key, index) => {
+                    trueKeysLabel += `${key}${
+                      index === trueKeys.length - 1 ? '' : ', '
+                    }`
+                  })
+                  return `${isAllTrue ? formatMessage({id: messages.allFilters.id}) : isAllFalse ? formatMessage({id: messages.noneFilters.id}) : `${trueKeysLabel}`}`
+                },
+                verbs: [
+                  {
+                    label: formatMessage({id: messages.shippingEstimate.id}),
+                    value: 'includes',
+                    object: {
+                      renderFn: this.shippingEstimateSelectorObject,
+                      extraParams: {},
+                    },
+                  },
+                ],
+              },
             },
           }}
         />

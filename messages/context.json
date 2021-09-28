@@ -72,6 +72,7 @@
   "admin/order.turn-off-auto-update": "admin/order.turn-off-auto-update",
   "admin/order.turn-on-auto-update": "admin/order.turn-on-auto-update",
   "admin/order.clear-filters": "admin/order.clear-filters",
+  "admin/order.idColumn": "admin/order.idColumn",
   "admin/order.status": "admin/order.status",
   "admin/order.payment": "admin/order.payment",
   "admin/order.receiver": "admin/order.receiver",

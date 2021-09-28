@@ -11,12 +11,13 @@ import {
   Progress,
   SelectableCard,
   Spinner,
-  Tag,
+  Tag
 } from 'vtex.styleguide'
 import {FormattedCurrency} from 'vtex.format-currency'
 import PropTypes from 'prop-types'
 import axios from 'axios'
 import {defineMessages, FormattedMessage} from 'react-intl'
+
 
 import parcel from '../assets/images/parcel.svg'
 import settings from '../settings'
@@ -74,7 +75,10 @@ const messages = defineMessages({
   theOrderIs: {id: 'admin/order.the-order-is' },
   close: {id: 'admin/order.close' },
   errors: {id: 'admin/order.errors' },
-  carriers: {}
+  labelNoData: {id: 'admin/orderLabel.no-data'},
+  labelFetchingData: {id: 'admin/orderLabel.fetching-data'},
+  labelGetLabel: {id: 'admin/orderLabel.get-label'},
+  labelNotAvailable: {id: 'admin/orderLabel.not-available'},
 });
 
 function FormattedMessageFixed(props) {
@@ -85,7 +89,7 @@ class OrderDetails extends Component<any, any> {
   static propTypes = {
     order: PropTypes.object,
     intl: PropTypes.object,
-    logError: PropTypes.func,
+    logError: PropTypes.func
   };
 
   constructor(props: any) {
@@ -113,6 +117,7 @@ class OrderDetails extends Component<any, any> {
       canSubmit: true,
       parcelWeightsErrors: [],
       collapsibles: {},
+      carriers: {},
     };
 
     this.handleOrder = this.handleOrder.bind(this);
@@ -139,6 +144,11 @@ class OrderDetails extends Component<any, any> {
     this.createOrderPayload = this.createOrderPayload.bind(this);
 
     this.collapse = this.collapse.bind(this)
+    this.showToast = this.showToast.bind(this)
+  }
+
+  showToast(message) {
+    this.props.showToast({ message, horizontalPosition: 'right', duration: 3000, })
   }
 
   async initCouriers() {
@@ -154,14 +164,14 @@ class OrderDetails extends Component<any, any> {
   }
 
   collapse(itemId, state) {
-    const { collapsibles } = this.state;
+    const {collapsibles} = this.state;
 
     collapsibles[itemId] = state;
-    this.setState({ collapsibles })
+    this.setState({collapsibles})
   }
 
   isPickupPointAddress() {
-    const { order } = this.state;
+    const {order} = this.state;
 
     return order.shippingData.address.addressType === settings.constants.pickup
   }
@@ -201,7 +211,7 @@ class OrderDetails extends Component<any, any> {
       numberOfParcels === 1
     );
 
-    this.setState({ canSubmit, parcelWeightsErrors })
+    this.setState({canSubmit, parcelWeightsErrors})
   }
 
   isCardSelected(opt) {
@@ -209,9 +219,9 @@ class OrderDetails extends Component<any, any> {
   }
 
   changeCard(opt) {
-    const { priceRates } = this.state;
+    const {priceRates} = this.state;
     const courierId = opt === settings.constants.auto ? null : priceRates[opt].carrierId;
-    this.setState({ selectedShippingCostCard: opt, courierId })
+    this.setState({selectedShippingCostCard: opt, courierId})
   }
 
   createOrderPayload() {
@@ -226,7 +236,7 @@ class OrderDetails extends Component<any, any> {
     } = this.state;
 
     let weight = 0;
-    let { value } = order;
+    let {value} = order;
     const parcels = [] as any;
 
     if (totalWeight === 0) {
@@ -245,7 +255,7 @@ class OrderDetails extends Component<any, any> {
           weight: parcelWeights[i],
           type: 2,
           reference1: `Parcel ${i}`,
-          size: { width: 1, height: 1, length: 1 },
+          size: {width: 1, height: 1, length: 1},
         })
       }
     } else {
@@ -254,11 +264,11 @@ class OrderDetails extends Component<any, any> {
         weight,
         type: 2,
         reference1: `Parcel 1`,
-        size: { width: 1, height: 1, length: 1 },
+        size: {width: 1, height: 1, length: 1},
       })
     }
 
-    const { address } = order.shippingData;
+    const {address} = order.shippingData;
     const addressText = [
       address.street,
       address.number,
@@ -269,8 +279,8 @@ class OrderDetails extends Component<any, any> {
       .filter(Boolean)
       .join(', ');
 
-    const { warehouseId } = order.shippingData.logisticsInfo[0].deliveryIds[0];
-    const { firstDigits } = order.paymentData.transactions[0].payments[0];
+    const {warehouseId} = order.shippingData.logisticsInfo[0].deliveryIds[0];
+    const {firstDigits} = order.paymentData.transactions[0].payments[0];
     const paymentPromissory =
       order.paymentData.transactions[0].payments[0].group ===
       settings.constants.promissory;
@@ -333,10 +343,10 @@ class OrderDetails extends Component<any, any> {
   }
 
   async getShipmentPriceRates() {
-    const { order } = this.state;
+    const {order} = this.state;
 
     if (order.shippingData.address.addressType != addressTypePickUp) {
-      this.setState({ priceRates: [] });
+      this.setState({priceRates: []});
 
       const payload = this.createOrderPayload();
 
@@ -374,19 +384,19 @@ class OrderDetails extends Component<any, any> {
               return result
             }, []);
 
-            this.setState({ priceRates })
+            this.setState({priceRates})
           }
         })
     }
   }
 
   toggleShipmentPayment() {
-    let { shipmentPayment } = this.state;
+    let {shipmentPayment} = this.state;
 
     shipmentPayment = !shipmentPayment;
     const shipmentPaymentMethod = shipmentPayment ? 2 : 1;
 
-    this.setState({ shipmentPayment, shipmentPaymentMethod }, () => {
+    this.setState({shipmentPayment, shipmentPaymentMethod}, () => {
       this.getShipmentPriceRates().then(() => {
         this.changeCard('auto')
       })
@@ -395,7 +405,7 @@ class OrderDetails extends Component<any, any> {
 
   changeNumberOfParcels(value) {
     this.setState(
-      { numberOfParcels: value, parcelWeights: [], parcelWeightsErrors: [] },
+      {numberOfParcels: value, parcelWeights: [], parcelWeightsErrors: []},
       () => {
         this.validateParcelsWeight();
         this.getShipmentPriceRates()
@@ -430,7 +440,7 @@ class OrderDetails extends Component<any, any> {
         parcelWeights[i + 1] = d
       });
 
-      this.setState({ parcelWeights })
+      this.setState({parcelWeights})
     }
   }
 
@@ -455,13 +465,13 @@ class OrderDetails extends Component<any, any> {
     return distribution
   }
 
-  async initOrderChangesAndDiscounts() {
-    const { order, changedItems, giftCards } = this.state;
-    let { totalOrderDiscount } = this.state;
+  initOrderChangesAndDiscounts() {
+    const {order, changedItems, giftCards} = this.state;
+    let {totalOrderDiscount} = this.state;
 
     if (order.paymentData.giftCards.length) {
       totalOrderDiscount += order.paymentData.transactions[0].payments.reduce(
-        function(result, it) {
+        function (result, it) {
           if (it.redemptionCode) {
             result -= it.value;
             giftCards.push({
@@ -475,87 +485,62 @@ class OrderDetails extends Component<any, any> {
         0
       );
 
-      this.setState({ totalOrderDiscount, giftCards })
+      this.setState({totalOrderDiscount, giftCards})
     }
 
     if (order.changesAttachment) {
       order.changesAttachment.changesData.map(item => {
-
         if (item.itemsAdded.length) {
+          if (item.incrementValue === 0) {
+            totalOrderDiscount += item.itemsAdded.reduce(function (result, it) {
+              result += it.price * it.quantity;
+
+              return result
+            }, 0)
+          }
+
           item.itemsAdded.map(added => {
             let val = 0;
+
             if (added.id in changedItems) {
               val = changedItems[added.id]
             }
+
             changedItems[added.id] = val + added.quantity
-
-            const existingProduct = order.items.filter((item) => {
-              return item.id === added.id
-            })
-
-            if (!existingProduct.length) {
-              fetch(`/catalog/stockkeepingunit/${added.id}`)
-                .then(resp => resp.json())
-                .then(async json => {
-
-                  let imageUrl = ""
-
-                  const variations = await fetch(`/catalog/product-variation/${json.ProductId}`)
-                    .then(response => response.json())
-
-                  const existingSku = variations.skus.filter((sku) => {
-                    return sku.sku == added.id
-                  })
-
-                  if (existingSku.length) {
-                    imageUrl = existingSku[0].image
-                  }
-
-                  order.items.push({
-                    name: json.Name,
-                    refId: json.RefId,
-                    productId: json.ProductId,
-                    id: json.Id,
-                    additionalInfo: {
-                      dimension: {
-                        cubicweight: json.CubicWeight,
-                        weight: json.WeightKg,
-                        height: json.Height,
-                        length: json.Length,
-                        width: json.Width
-                      }
-                    },
-                    measurementUnit: json.MeasurementUnit,
-                    tax: 0,
-                    price: added.price,
-                    listPrice: added.price,
-                    sellingPrice: added.price,
-                    quantity: added.quantity,
-                    imageUrl: imageUrl,
-                    unitMultiplier: added.unitMultiplier
-                  })
-                })
-            }
           })
         }
 
         if (item.itemsRemoved.length) {
+          if (item.discountValue === 0) {
+            totalOrderDiscount -= item.itemsRemoved.reduce(function (
+              result,
+              it
+              ) {
+                result += it.price * it.quantity;
+
+                return result
+              },
+              0)
+          }
+
           item.itemsRemoved.map(removed => {
             let val = 0;
+
             if (removed.id in changedItems) {
               val = changedItems[removed.id]
             }
+
             changedItems[removed.id] = val - removed.quantity
           })
         }
       });
 
-      this.setState({ changedItems, totalOrderDiscount, order })
+      this.setState({changedItems, totalOrderDiscount})
     }
   }
 
   initOrderWeight() {
-    const { order } = this.state;
+    const {order} = this.state;
 
     let trackingNumber;
 
@@ -565,13 +550,13 @@ class OrderDetails extends Component<any, any> {
     }
 
     if (!trackingNumber && order.status === settings.constants.invoiced) {
-      const totalWeight = order.items.reduce(function(result, item) {
+      const totalWeight = order.items.reduce(function (result, item) {
         result += item.additionalInfo.dimension.weight * item.quantity;
 
         return result
       }, 0);
 
-      this.setState({ totalWeight }, () => {
+      this.setState({totalWeight}, () => {
         this.getShipmentPriceRates()
       })
     }
@@ -584,7 +569,7 @@ class OrderDetails extends Component<any, any> {
   }
 
   async getOrder() {
-    const { order } = this.state;
+    const {order} = this.state;
 
     return await fetch(
       `/api/oms/pvt/orders/${order.orderId}/?_=${Date.now()}`,
@@ -593,21 +578,22 @@ class OrderDetails extends Component<any, any> {
       }
     )
       .then(res => res.json())
-      .then(json => this.setState({ order: json }))
+      .then(json => this.setState({order: json}))
   }
 
   async updateAWBStatus(data) {
-    const { order } = this.state;
+    const {order} = this.state;
     let invoiceNumber = null;
+    const {formatMessage} = this.props.intl;
 
     if (order.status === settings.constants.invoiced) {
       const packageItem = order.packageAttachment.packages[0];
-
       invoiceNumber = packageItem.invoiceNumber
     }
 
     if (data.length && data[0].hasOwnProperty('history') && invoiceNumber) {
-      const { history } = data[0];
+      this.showToast(formatMessage({id: messages.labelFetchingData.id}))
+      const {history} = data[0];
 
       const events = history.map(event => {
         return {
@@ -632,15 +618,16 @@ class OrderDetails extends Component<any, any> {
           window.location.reload()
         }, 2000)
       } catch (err) {
-        this.setState({ posted: false })
+        this.setState({posted: false})
       }
     } else {
-      this.setState({ posted: false })
+      this.showToast(formatMessage({id: messages.labelNoData.id}))
+      this.setState({posted: false})
     }
   }
 
   getAWBHistory() {
-    this.setState({ posted: true });
+    this.setState({posted: true});
     let courier = null;
     let trackingNumber = null;
     const { order, carriers } = this.state;
@@ -691,14 +678,14 @@ class OrderDetails extends Component<any, any> {
           }
         })
     } catch (err) {
-      this.setState({ error: err, modalOpen: true, posted: false }, () => {
+      this.setState({error: err, modalOpen: true, posted: false}, () => {
         this.props.logError(err)
       })
     }
   }
 
   closeModal() {
-    this.setState({ modalOpen: false, errors: {}, error: {}, posted: false })
+    this.setState({modalOpen: false, errors: {}, error: {}, posted: false})
   }
 
   async updateInvoice() {
@@ -719,7 +706,7 @@ class OrderDetails extends Component<any, any> {
       !trackingNumber
     ) {
       if (!this.state.awb.hasOwnProperty('errors')) {
-        const { awb } = this.state;
+        const {awb} = this.state;
         const data = {
           trackingNumber: awb.courierShipmentId,
           trackingUrl: awb.trackPageUrl,
@@ -741,7 +728,7 @@ class OrderDetails extends Component<any, any> {
             window.location.reload()
           }, 10000)
         } catch (err) {
-          this.setState({ error: err, modalOpen: true, posted: false }, () => {
+          this.setState({error: err, modalOpen: true, posted: false}, () => {
             this.props.logError(err)
           })
         }
@@ -750,35 +737,35 @@ class OrderDetails extends Component<any, any> {
   }
 
   handleOrder() {
-    this.setState({ posted: true });
+    this.setState({posted: true});
     try {
-      const { order } = this.state;
+      const {order} = this.state;
 
       axios.post(`/api/oms/pvt/orders/${order.orderId}/start-handling`).then(() => {
-          window.location.reload()
-        })
+        window.location.reload()
+      })
     } catch (err) {
-      this.setState({ posted: false })
+      this.setState({posted: false})
     }
   }
 
   changeState(newState) {
-    this.setState({ posted: true });
+    this.setState({posted: true});
     try {
-      const { order } = this.state;
+      const {order} = this.state;
 
       axios.post(`/api/oms/pvt/orders/${order.orderId}/changestate/${newState}`).then(() => {
-          window.location.reload()
-        })
+        window.location.reload()
+      })
     } catch (err) {
-      this.setState({ posted: false })
+      this.setState({posted: false})
     }
   }
 
   requestAWB() {
-    this.setState({ posted: true });
+    this.setState({posted: true});
     this.getOrder().then(() => {
-      const { order } = this.state;
+      const {order} = this.state;
 
       if (order.packageAttachment.packages && order.packageAttachment.packages.length) {
         const packageItem = order.packageAttachment.packages[0];
@@ -803,10 +790,10 @@ class OrderDetails extends Component<any, any> {
         })
           .then(res => res.json())
           .then(json =>
-            this.setState({ awb: json }, () => {
+            this.setState({awb: json}, () => {
               if (json.hasOwnProperty('response')) {
                 this.setState(
-                  { errors: json.response.data.errors, modalOpen: true },
+                  {errors: json.response.data.errors, modalOpen: true},
                   () => {
                     this.props.logError(json.response.data.errors)
                   }
@@ -817,7 +804,7 @@ class OrderDetails extends Component<any, any> {
             })
           )
       } catch (err) {
-        this.setState({ error: err, modalOpen: true, posted: false }, () => {
+        this.setState({error: err, modalOpen: true, posted: false}, () => {
           this.props.logError(err)
         })
       }
@@ -828,6 +815,9 @@ class OrderDetails extends Component<any, any> {
     let courier = null;
     let trackingNumber = null;
     const { order, format, carriers } = this.state;
+    const { formatMessage } = this.props.intl;
+
+    this.showToast(formatMessage({id: messages.labelGetLabel.id}))
 
     if (
       order.packageAttachment.packages &&
@@ -844,41 +834,54 @@ class OrderDetails extends Component<any, any> {
     }
 
     // @ts-ignore
-    const reverseCourier = Object.assign({}, ...Object.entries(carriers).map(([a, b]) => ({ [b]: a })));
+    const reverseCourier = Object.assign(
+      {},
+      ...Object.entries(settings.carriers).map(([a, b]) => ({[b]: a}))
+    );
 
-    axios
-      .get(
-        `/innoship/get-label/${reverseCourier[courier]}/${trackingNumber}/${format}`
-      )
-      .then(function(response) {
-        const buffer = new Buffer(response.data.contents, 'base64');
-        const blob = new Blob([buffer], { type: 'application/pdf' });
-        const link = document.createElement('a');
+    if (!courier || !trackingNumber || !reverseCourier[courier]) {
+      this.showToast(formatMessage({id: messages.labelNotAvailable.id}))
+      return
+    }
 
-        link.href = window.URL.createObjectURL(blob);
-        link.download = `${trackingNumber}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link)
+    try {
+      axios
+        .get(
+          `/innoship/get-label/${reverseCourier[courier]}/${trackingNumber}/${format}`
+        )
+        .then(function (response) {
+          const buffer = new Buffer(response.data.contents, 'base64');
+          const blob = new Blob([buffer], {type: 'application/pdf'});
+          const link = document.createElement('a');
+
+          link.href = window.URL.createObjectURL(blob);
+          link.download = `${trackingNumber}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link)
+        }).catch(() => {
+        this.showToast(formatMessage({id: messages.labelNotAvailable.id}))
       });
-
+    } catch {
+      this.showToast(formatMessage({id: messages.labelNotAvailable.id}))
+    }
     event.preventDefault()
   }
 
   changeTotalWeight(value) {
     const totalWeight = isNaN(value) ? 0 : value;
 
-    this.setState({ totalWeight }, () => {
+    this.setState({totalWeight}, () => {
       this.validateParcelsWeight();
       this.getShipmentPriceRates()
     })
   }
 
   changeWeight(index, value) {
-    const { parcelWeights } = this.state;
+    const {parcelWeights} = this.state;
 
     parcelWeights[index] = isNaN(value) ? 0 : value;
-    this.setState({ parcelWeights }, () => {
+    this.setState({parcelWeights}, () => {
       this.validateParcelsWeight();
       this.getShipmentPriceRates()
     })
@@ -897,9 +900,8 @@ class OrderDetails extends Component<any, any> {
       collapsibles,
     } = this.state;
 
-    let { totalWeight } = this.state;
+    let {totalWeight} = this.state;
     const {formatMessage} = this.props.intl;
-
     if (!order.hasOwnProperty('error')) {
       let button;
       let trackingNumber = null;
@@ -959,7 +961,7 @@ class OrderDetails extends Component<any, any> {
         )
       }
 
-      const ship = order.totals.filter(function(item) {
+      const ship = order.totals.filter(function (item) {
         return item.id === settings.constants.shipping
       });
 
@@ -1020,7 +1022,7 @@ class OrderDetails extends Component<any, any> {
         const qOptions = [] as any;
 
         for (let i = 1; i <= 10; i++) {
-          qOptions.push({ value: i, label: i })
+          qOptions.push({value: i, label: i})
         }
 
         if (order.shippingData.address.addressType === settings.constants.pickup) {
@@ -1028,13 +1030,13 @@ class OrderDetails extends Component<any, any> {
         } else if (!priceRates.length) {
           priceRatesSimulation = (
             <Card>
-              <Spinner />
+              <Spinner/>
             </Card>
           )
         } else {
           priceRatesSimulation = (
-            <div className={`pa5 flex justify-center`}>
-              <div className={`mr4`}>
+            <div className={`pa5 flex flex-wrap justify-center`}>
+              <div className={`mr4 w-30`}>
                 <SelectableCard
                   hasGroupRigth
                   selected={this.isCardSelected('auto')}
@@ -1047,7 +1049,7 @@ class OrderDetails extends Component<any, any> {
               </div>
               {priceRates.map((item, i) => {
                 return (
-                  <div key={i} className={`mr4`}>
+                  <div key={i} className={`mr4 w-30`}>
                     <SelectableCard
                       hasGroupRigth
                       selected={this.isCardSelected(i)}
@@ -1217,13 +1219,14 @@ class OrderDetails extends Component<any, any> {
       if (trackingNumber) {
         displayTrackingNumber = (
           <div>
-            <p>{formatMessage({id: messages.trackingNumberIs.id})}{' '}<span className={`${styles.bold}`}>{trackingNumber}</span></p>
+            <p>{formatMessage({id: messages.trackingNumberIs.id})}{' '}<span
+              className={`${styles.bold}`}>{trackingNumber}</span></p>
             <div className={`flex flex-row justify-center`}
             >
               <div className={`flex`}>
                 <Button
                   onClick={event => this.printAWB(event)}
-                  variation="primary"
+                  variation="secondary"
                   size="small"
                 >
                   {formatMessage({id: messages.printLabel.id})}
@@ -1232,11 +1235,11 @@ class OrderDetails extends Component<any, any> {
               <div className={`ml2 flex`}>
                 <Dropdown
                   options={[
-                    { value: 'A4', label: 'A4' },
-                    { value: 'A6', label: 'A6' },
+                    {value: 'A4', label: 'A4'},
+                    {value: 'A6', label: 'A6'},
                   ]}
                   size="small"
-                  onChange={(_, v) => this.setState({ format: v })}
+                  onChange={(_, v) => this.setState({format: v})}
                   value={this.state.format}
                 />
               </div>
@@ -1260,11 +1263,12 @@ class OrderDetails extends Component<any, any> {
       if (trackingNumber) {
         displayTrackingUpdate = (
           <div>
-            <p>{formatMessage({id: messages.awbStatus.id})}{': '} <span className={`${styles.bold}`}>{awbStatus}</span></p>
+            <p>{formatMessage({id: messages.awbStatus.id})}{': '} <span className={`${styles.bold}`}>{awbStatus}</span>
+            </p>
             <Button
               onClick={() => this.getAWBHistory()}
               isLoading={this.state.posted}
-              variation="primary"
+              variation="secondary"
               size="small"
             >{formatMessage({id: messages.updateAwbStatus.id})}</Button>
           </div>
@@ -1278,7 +1282,7 @@ class OrderDetails extends Component<any, any> {
               <div>
                 <Tag bgColor={tagColor} color="#fff">
                   <span className="nowrap">
-                    <FormattedMessageFixed id={messageId} />
+                    <FormattedMessageFixed id={messageId}/>
                     {extraStatusMessage}
                   </span>
                 </Tag>
@@ -1300,27 +1304,25 @@ class OrderDetails extends Component<any, any> {
                     <div>
                       {order.items.map((item, i) => {
                         const qOptions = [] as any;
-                        const { sellingPrice } = item;
+                        const {sellingPrice} = item;
                         const taxPrice = item.tax;
 
-                        const { weight } = item.additionalInfo.dimension;
-                        let { quantity } = item;
+                        const {weight} = item.additionalInfo.dimension;
+                        let {quantity} = item;
 
                         if (item.id in this.state.changedItems) {
-                          if (this.state.changedItems[item.id] < 0) {
-                            quantity += this.state.changedItems[item.id];
-                          }
+                          quantity += this.state.changedItems[item.id];
                           if (!quantity) {
                             return false
                           }
                         }
 
                         for (let i = 1; i <= quantity; i++) {
-                          qOptions.push({ value: i, label: i })
+                          qOptions.push({value: i, label: i})
                         }
 
                         totalWeight += weight * quantity;
-                        const { productsSpecs } = this.state;
+                        const {productsSpecs} = this.state;
 
                         fetch(
                           `/api/catalog_system/pvt/products/${item.productId}/specification`
@@ -1345,7 +1347,7 @@ class OrderDetails extends Component<any, any> {
                             if (productsSpecs[item.productId] === undefined) {
                               productsSpecs[item.productId] = specs;
                               quantityWeights[quantity] = weight * quantity;
-                              this.setState({ productsSpecs, quantityWeights })
+                              this.setState({productsSpecs, quantityWeights})
                             }
                           });
 
@@ -1354,16 +1356,19 @@ class OrderDetails extends Component<any, any> {
                             key={i}
                             className={`pa2 flex flex-row ${styles.flex1}`}
                           >
-                            <div className={`${styles.flex01}`}>
+                            <div className={`${styles.flex02}`}>
                               <img src={item.imageUrl} alt={'Image'}/>
                             </div>
 
-                            <div className={`flex flex-column ${styles.flex05}`}>
-                              <span className={`${styles.productInfo} ${styles.bold}`}>{formatMessage({id: messages.productId.id})}{': '} #{item.productId}</span>
-                              <span className={`${styles.productInfo} ${styles.bold}`}>{formatMessage({id: messages.skuRefCode.id})}{': '}  #{item.refId}</span>
-                              <span className={`${styles.productInfo}`}>{item.name}</span>
-                              <span className={`${styles.productInfo}`}>{formatMessage({id: messages.weight.id})}{': '}  {weight}kg x {quantity}{item.measurementUnit} = {weight * quantity}kg</span>
-                              <div className={`${styles.productInfo}`}>
+                            <div className={`flex flex-column ${styles.flex08}`}>
+                                <span
+                                  className={`${styles.productInfo} ${styles.bold} ${styles.font14}`}>{formatMessage({id: messages.productId.id})}{': '} #{item.productId}</span>
+                              <span
+                                className={`${styles.productInfo} ${styles.bold} ${styles.font14}`}>{formatMessage({id: messages.skuRefCode.id})}{': '} #{item.refId}</span>
+                              <span className={`${styles.productInfo} ${styles.font14}`}>{item.name}</span>
+                              <span
+                                className={`${styles.productInfo}  ${styles.font14}`}>{formatMessage({id: messages.weight.id})}{': '} {weight}kg x {quantity}{item.measurementUnit} = {weight * quantity}kg</span>
+                              <div className={`${styles.productInfo}  ${styles.font14}`}>
                                 {productsSpecs[item.productId] ? (
                                   <Collapsible
                                     header={<span>{formatMessage({id: messages.moreDetails.id})}</span>}
@@ -1375,8 +1380,9 @@ class OrderDetails extends Component<any, any> {
                                   </Collapsible>
                                 ) : null}
                               </div>
-                              <span className={`${styles.productInfo}`}>{quantity} {item.measurementUnit}</span>
-                              <span className={`${styles.productInfo}`}>
+                              <span
+                                className={`${styles.productInfo}  ${styles.font14}`}>{quantity} {item.measurementUnit}</span>
+                              <span className={`${styles.productInfo}  ${styles.font14}`}>
                                 <FormattedCurrency
                                   value={
                                     (sellingPrice + taxPrice) /
@@ -1390,24 +1396,31 @@ class OrderDetails extends Component<any, any> {
                       })}
                     </div>
                     <div className={`flex flex-column ${styles.orderDetailsTotals}`}>
-                      <span>{formatMessage({id: messages.shippingTotal.id})}{': '}<FormattedCurrency value={shipping / settings.constants.price_multiplier}/></span>
+                        <span
+                          className={`${styles.font14}`}>{formatMessage({id: messages.shippingTotal.id})}{': '}<FormattedCurrency
+                          value={shipping / settings.constants.price_multiplier}/></span>
                       {giftCards.map((item, i) => {
                         return (
-                          <span key={i}>
-                            {formatMessage({id: messages.giftCard.id})}{": "} <FormattedCurrency value={item.value} />{' '}
+                          <span className={`${styles.font14}`} key={i}>
+                            {formatMessage({id: messages.giftCard.id})}{": "} <FormattedCurrency
+                            value={item.value}/>{' '}
                             ({item.code})
                           </span>
                         )
                       })}
-                      <span>
-                        {formatMessage({id: messages.totalOrderValue.id})}{': '}<FormattedCurrency value={(orderValue + totalOrderDiscount) / settings.constants.price_multiplier}/>
+                      <span className={`${styles.font14}`}>
+                        {formatMessage({id: messages.totalOrderValue.id})}{': '}<FormattedCurrency
+                        value={(orderValue + totalOrderDiscount) / settings.constants.price_multiplier}/>
                       </span>
                     </div>
                   </div>
-                  <div className={`flex flex-column ${styles.flex03}`}>
-                    <span className={`${styles.shippingInfoTitle} ${styles.bold}`}>{formatMessage({id: messages.shippingInformation.id})}</span>
-                    <span className={`${styles.shippingInfoText}`}>{formatMessage({id: messages.client.id})}{': '} {order.shippingData.address.receiverName}</span>
-                    <span className={`${styles.shippingInfoText}`}>{formatMessage({id: messages.phone.id})}{': '} {order.clientProfileData.phone}</span>
+                  <div className={`flex flex-column ${styles.flex05}`}>
+                      <span
+                        className={`${styles.shippingInfoTitle} ${styles.bold} ${styles.font14}`}>{formatMessage({id: messages.shippingInformation.id})}</span>
+                    <span
+                      className={`${styles.shippingInfoText} ${styles.font14}`}>{formatMessage({id: messages.client.id})}{': '} {order.shippingData.address.receiverName}</span>
+                    <span
+                      className={`${styles.shippingInfoText} ${styles.font14}`}>{formatMessage({id: messages.phone.id})}{': '} {order.clientProfileData.phone}</span>
                     {displayShippingInformation}
                     {displayCorporateInformation}
                   </div>
@@ -1420,20 +1433,20 @@ class OrderDetails extends Component<any, any> {
               {button}
             </div>
 
-            <h1>{formatMessage({id: messages.shippingStatus.id})}</h1>
+            <h4 className={`mt7`}>{formatMessage({id: messages.shippingStatus.id})}</h4>
 
             <div className={`mb4 mt4 ${styles.textCenter}`}>
-              <img className={`${styles.parcelImage}`} src={parcel} alt="parcel" />
+              <img className={`${styles.parcelImage}`} src={parcel} alt="parcel"/>
             </div>
 
             <div className={`mb4 mt4 ${styles.textCenter}`}>
-              <h2><FormattedMessageFixed id={messageId} /></h2>
+              <h2><FormattedMessageFixed id={messageId}/></h2>
             </div>
 
-            <Progress type="steps" steps={steps} />
+            <Progress type="steps" steps={steps}/>
 
             <div className={`mb4 mt4 ${styles.textCenter}`}>
-              <span>{formatMessage({id: messages.theOrderIs.id})} <FormattedMessageFixed id={messageId} /></span>
+              <span>{formatMessage({id: messages.theOrderIs.id})} <FormattedMessageFixed id={messageId}/></span>
             </div>
 
             <div className={`mb4 mt4 ${styles.textCenter}`}>{displayTrackingUpdate}</div>
@@ -1460,7 +1473,7 @@ class OrderDetails extends Component<any, any> {
             <div>
               <p className={`f3 f3-ns fw3 gray`}>{formatMessage({id: messages.errors.id})}</p>
               <ul>
-                {Object.keys(errors).map(function(key) {
+                {Object.keys(errors).map(function (key) {
                   if (errors[key].hasOwnProperty('details')) {
                     return errors[key].details.map(msg => {
                       return <li key={key}>{msg}</li>
@@ -1481,3 +1494,4 @@ class OrderDetails extends Component<any, any> {
 }
 
 export default OrderDetails
+
