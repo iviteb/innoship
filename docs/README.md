@@ -99,6 +99,15 @@ You can configure which carriers will be included in this update by accessing th
 
 <hr>
 
+## Payment settings
+
+<span style="color: orange">WARNING</span> In order fot the application to work correctly, payment systems must be properly configured:
+* `Cash` payment methods must be configured to belong to the `cash` payment group
+* `Payment order` payment methods must be configured to belong to the `promissary` payment group.
+
+
+
+
 ## Possible Errors
 
 * `Value of field ExternalClientLocation is not valid` - represents the warehouse ID declared in VTEX 
