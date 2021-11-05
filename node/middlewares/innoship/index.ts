@@ -1,4 +1,6 @@
 import { json } from 'co-body'
+import { formatError } from '../utils/error'
+import { createPayload, getTransactionDiscount } from '../utils/mappings'
 
 export async function getLabel(ctx: any, next: () => Promise<any>) {
   const {
@@ -11,20 +13,6 @@ export async function getLabel(ctx: any, next: () => Promise<any>) {
     trackingNumber,
     format
   )
-
-  ctx.status = 200
-  ctx.body = response
-
-  await next()
-}
-
-export async function requestAwb(ctx: any, next: () => Promise<any>) {
-  const body = await json(ctx.req)
-  const {
-    clients: { innoship: innoshipClient },
-  } = ctx
-
-  const response = await innoshipClient.requestAwb(body)
 
   ctx.status = 200
   ctx.body = response
@@ -46,14 +34,58 @@ export async function requestAwbHistory(ctx: any, next: () => Promise<any>) {
   await next()
 }
 
-export async function requestPriceRates(ctx: any, next: () => Promise<any>) {
-  const body = await json(ctx.req)
+export async function requestAwb(ctx: any, next: () => Promise<any>) {
   const {
-    clients: { innoship: innoshipClient },
+    clients: { oms, logger, innoship },
   } = ctx
 
-  const response = await innoshipClient.requestPriceRates(body)
+  const body = await json(ctx.req) as GenerateAwbRequest
+ 
+  let order: any
+  try {
+    order = await oms.getOrderId(body.orderId)
+  } catch (e) {
+    logger.error({
+      message: 'Generate AWB',
+      error: formatError(e),
+    })
+    ctx.status = 500
+    ctx.body = e.response
+    return
+  }
+  const totalOrderDiscount = body.totalOrderDiscount ?? getTransactionDiscount(order)
+  const payload = await createPayload({...body, totalOrderDiscount}, order)
+  const response = await innoship.requestAwb(payload)
+  ctx.status = 200
+  const result = { 
+    trackingNumber: response.courierShipmentId,
+    trackingUrl: response.trackPageUrl,
+    courier:  response.courier,
+    dispatchedDate: response.calculatedDeliveryDate
+  }
 
+  ctx.body = result
+
+  await next()
+}
+
+export async function requestPriceRates(ctx: any, next: () => Promise<any>) {
+  const {
+    clients: { oms, innoship}
+  } = ctx
+
+  const body = await json(ctx.req) as GenerateAwbRequest
+  let order: any
+  try {
+    order = await oms.getOrderId(body.orderId)
+  } catch (e) {
+    ctx.status = 500
+    ctx.body = e.response
+    return
+  }
+  const totalOrderDiscount = body.totalOrderDiscount ?? getTransactionDiscount(order)
+  const payload = await createPayload({...body, totalOrderDiscount}, order)
+  const response = await innoship.requestPriceRates(payload)
   ctx.status = 200
   ctx.body = response
 
@@ -126,7 +158,6 @@ export async function getCouriers(ctx: any, next: () => Promise<any>) {
     })
 
   const storedCouriers = await masterData.getList(ctx, 'couriers', 'couriers')
-
   ctx.status = 200
   ctx.body = storedCouriers[0].data
 

@@ -1,4 +1,8 @@
-import React, {Component} from 'react'
+import axios from 'axios'
+import PropTypes from 'prop-types'
+import React, { Component } from 'react'
+import { defineMessages, FormattedMessage } from 'react-intl'
+import { FormattedCurrency } from 'vtex.format-currency'
 import {
   Box,
   Button,
@@ -13,31 +17,18 @@ import {
   Spinner,
   Tag
 } from 'vtex.styleguide'
-import {FormattedCurrency} from 'vtex.format-currency'
-import PropTypes from 'prop-types'
-import axios from 'axios'
-import {defineMessages, FormattedMessage} from 'react-intl'
-
-
 import parcel from '../assets/images/parcel.svg'
 import settings from '../settings'
 import styles from '../style.css'
 import {
-  addressTypePickUp,
-  awbContent,
-  awbSourceChannel,
-  awbStatusNew,
+  addressTypePickUp, awbStatusNew,
   completedStep,
-  defaultAWBFormat,
-  defaultCountryCode,
-  defaultEnvelopeCount,
-  defaultPalettesCount,
-  defaultServiceId,
-  pickupServiceId,
-  requestHeaders,
+  defaultAWBFormat, requestHeaders,
   serviceLockers,
   toDoStep
-} from "../utils/constants";
+} from "../utils/constants"
+
+
 
 const messages = defineMessages({
   order: {id: "admin/order.order"},
@@ -141,8 +132,6 @@ class OrderDetails extends Component<any, any> {
     this.toggleShipmentPayment = this.toggleShipmentPayment.bind(this);
     this.getShipmentPriceRates = this.getShipmentPriceRates.bind(this);
 
-    this.createOrderPayload = this.createOrderPayload.bind(this);
-
     this.collapse = this.collapse.bind(this)
     this.showToast = this.showToast.bind(this)
   }
@@ -224,123 +213,7 @@ class OrderDetails extends Component<any, any> {
     this.setState({selectedShippingCostCard: opt, courierId})
   }
 
-  createOrderPayload() {
-    const {
-      order,
-      totalOrderDiscount,
-      numberOfParcels,
-      totalWeight,
-      parcelWeights,
-      shipmentPaymentMethod,
-      courierId,
-    } = this.state;
-
-    let weight = 0;
-    let {value} = order;
-    const parcels = [] as any;
-
-    if (totalWeight === 0) {
-      order.items.reduce(
-        (weight, item) =>
-          weight + item.additionalInfo.dimension.weight * item.quantity
-      )
-    } else {
-      weight = totalWeight
-    }
-
-    if (numberOfParcels > 1) {
-      for (let i = 1; i <= numberOfParcels; i++) {
-        parcels.push({
-          sequenceNo: i,
-          weight: parcelWeights[i],
-          type: 2,
-          reference1: `Parcel ${i}`,
-          size: {width: 1, height: 1, length: 1},
-        })
-      }
-    } else {
-      parcels.push({
-        sequenceNo: 1,
-        weight,
-        type: 2,
-        reference1: `Parcel 1`,
-        size: {width: 1, height: 1, length: 1},
-      })
-    }
-
-    const {address} = order.shippingData;
-    const addressText = [
-      address.street,
-      address.number,
-      address.neighborhood,
-      address.complement,
-      address.reference,
-    ]
-      .filter(Boolean)
-      .join(', ');
-
-    const {warehouseId} = order.shippingData.logisticsInfo[0].deliveryIds[0];
-    const {firstDigits} = order.paymentData.transactions[0].payments[0];
-    const paymentPromissory =
-      order.paymentData.transactions[0].payments[0].group ===
-      settings.constants.promissory;
-
-    value += totalOrderDiscount;
-
-    const payment =
-      firstDigits || paymentPromissory
-        ? 0
-        : value / settings.constants.price_multiplier;
-
-    const payload = {
-      serviceId: defaultServiceId,
-      shipmentDate: new Date().toISOString(),
-      addressFrom: null,
-      addressTo: {
-        name: address.receiverName,
-        contactPerson: address.receiverName,
-        country: defaultCountryCode,
-        countyName: address.state,
-        localityName: address.city,
-        addressText,
-        postalCode: address.postalCode,
-        phone: order.clientProfileData.phone,
-        email: order.clientProfileData.email,
-      },
-      payment: shipmentPaymentMethod,
-      content: {
-        envelopeCount: defaultEnvelopeCount,
-        parcelsCount: numberOfParcels,
-        palettesCount: defaultPalettesCount,
-        totalWeight: weight,
-        contents: awbContent,
-        parcels,
-      },
-      externalClientLocation: warehouseId,
-      externalOrderId: order.orderId,
-      sourceChannel: awbSourceChannel,
-      extra: {
-        bankRepaymentAmount: payment,
-      },
-    } as any;
-
-    if (courierId) {
-      payload.courierId = courierId
-    }
-
-    if (order.shippingData.address.addressType === settings.constants.pickup) {
-      payload.serviceId = pickupServiceId;
-      payload.addressTo.fixedLocationId = order.shippingData.address.addressId;
-
-      payload.addressTo.localityId = order.shippingData.address.neighborhood;
-      payload.addressTo.countyName = order.shippingData.address.state;
-      payload.addressTo.localityName = order.shippingData.address.city;
-      payload.addressTo.addressText = order.shippingData.address.street;
-      payload.addressTo.postalCode = order.shippingData.address.postalCode
-    }
-
-    return payload
-  }
+  
 
   async getShipmentPriceRates() {
     const {order} = this.state;
@@ -348,9 +221,17 @@ class OrderDetails extends Component<any, any> {
     if (order.shippingData.address.addressType != addressTypePickUp) {
       this.setState({priceRates: []});
 
-      const payload = this.createOrderPayload();
+      const payload = {
+        totalOrderDiscount: this.state.totalOrderDiscount,
+        numberOfParcels: this.state.numberOfParcels,
+        totalWeight: this.state.totalWeight,
+        parcelWeights: this.state.parcelWeights,
+        shipmentPaymentMethod: this.state.shipmentPaymentMethod,
+        courierId: this.state.courierId,
+        orderId: this.state.order.orderId
+      }
 
-      return await fetch('/innoship/request-price-rates', {
+      return await fetch(`/innoship/request-price-rates`, {
         method: 'POST',
         body: JSON.stringify(payload),
         headers: {
@@ -708,10 +589,10 @@ class OrderDetails extends Component<any, any> {
       if (!this.state.awb.hasOwnProperty('errors')) {
         const {awb} = this.state;
         const data = {
-          trackingNumber: awb.courierShipmentId,
-          trackingUrl: awb.trackPageUrl,
+          trackingNumber: awb.trackingNumber,
+          trackingUrl: awb.trackingUrl,
           courier: carriers[awb.courier],
-          dispatchedDate: awb.calculatedDeliveryDate,
+          dispatchedDate: awb.dispatchedDate,
         };
 
         try {
@@ -777,7 +658,15 @@ class OrderDetails extends Component<any, any> {
         }
       }
 
-      const payload = this.createOrderPayload();
+      const payload = {
+        totalOrderDiscount: this.state.totalOrderDiscount,
+        numberOfParcels: this.state.numberOfParcels,
+        totalWeight: this.state.totalWeight,
+        parcelWeights: this.state.parcelWeights,
+        shipmentPaymentMethod: this.state.shipmentPaymentMethod,
+        courierId: this.state.courierId,
+        orderId: this.state.order.orderId
+      }
 
       try {
         fetch('/innoship/request-awb', {
