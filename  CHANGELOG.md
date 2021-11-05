@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Fixed 
+- Send payload to backend in order to enable api calls for request awb endpint
+
 ### Fixed
 - Total weight processing delay that resulted in a shipping simulation with 0 weight and errors.
 ### Added
