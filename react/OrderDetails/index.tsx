@@ -591,7 +591,7 @@ class OrderDetails extends Component<any, any> {
         const data = {
           trackingNumber: awb.trackingNumber,
           trackingUrl: awb.trackingUrl,
-          courier: carriers[awb.courier],
+          courier: carriers[awb.courierId],
           dispatchedDate: awb.dispatchedDate,
         };
 

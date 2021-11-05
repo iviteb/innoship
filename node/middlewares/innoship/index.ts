@@ -60,9 +60,9 @@ export async function requestAwb(ctx: any, next: () => Promise<any>) {
   const result = { 
     trackingNumber: response.courierShipmentId,
     trackingUrl: response.trackPageUrl,
-    courier:  response.courier,
+    courierId:  response.courier,
     dispatchedDate: response.calculatedDeliveryDate
-  }
+  } as GenerateAwbResponse
 
   ctx.body = result
 
