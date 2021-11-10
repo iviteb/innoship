@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+- Add phoenNumbers and emails in payload
+
 ### Fixed 
 - Send payload to backend in order to enable api calls for request awb endpint
 
