@@ -1,0 +1,16 @@
+{
+  "name": "Innoship",
+  "headline": "Software de envío de múltiples transportistas",
+  "overview": "La aplicación le permite integrarse con Innoship, un software de envío que ayuda a los minoristas a través de un único punto de integración a optimizar sus costos y brindar rendimiento a través de la asignación dinámica de transportistas. Actualmente, Innoship está integrado con más de 55 transportistas y más de 100 servicios de entrega. Desde el pago y el envío hasta el seguimiento, las devoluciones y el análisis, Innoship lo ayuda a cumplir de manera segura las promesas hechas a sus clientes.",
+  "features": [
+    "Integra su tienda VTEX con su cuenta Innoship",
+    "Le permite recibir códigos Innoship AWB",
+    "Permite gestionar envíos Innoship dentro de VTEX",
+    "Incluye una integración de Smartbill para facturas de envío"
+  ],
+  "additionalInformation": "Esta aplicación y todos los servicios asociados se proporcionan 'tal cual', sin garantía de ningún tipo, ni expresa ni implícita. Ni el editor ni sus socios, afiliados, empleados o contratistas garantizan que esta aplicación satisfaga sus necesidades, proporcione un uso ininterrumpido o funcione sin retrasos o sin errores. Ni el editor ni sus socios, afiliados, empleados o contratistas asumen ninguna responsabilidad por los errores y el mal funcionamiento de la aplicación y no proporcionarán soporte o mantenimiento de ningún tipo. Todas las disposiciones y garantías de cualquier tipo, expresas o implícitas, incluyendo pero sin limitarse a cualquier garantía de rendimiento, integridad del proceso, o funcionalidades particulares, son por la presente rechazadas y excluidas a menos que se prohíba o restrinja por la ley aplicable. Desarrollado bajo EE FPA.",
+  "websiteURL": "https://www.innoship.com/",
+  "support": {
+    "url": "https://innoship.com/en/contact-2/"
+  }
+}

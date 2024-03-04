@@ -1,0 +1,16 @@
+{
+  "name": "Innoship",
+  "headline": "Multiple carrier shipping software",
+  "overview": "The app allows you to integrate with Innoship, a shipping software that helps retailers through a single point of integration to optimize their costs and deliver performance through dynamic carrier allocation. Currently, Innoship is integrated with over 55 carriers and over 100 delivery services. From checkout and shipping to tracking, returns and analytics, Innoship helps you safely deliver on promises made to your customers.",
+  "features": [
+    "Integrates your VTEX store with your Innoship account",
+    "Allows you to receive Innoship AWB codes",
+    "Allows you to manage Innoship shipments inside VTEX",
+    "Includes a Smartbill Integration for shipping invoices"
+  ],
+  "additionalInformation": "This app and all affiliated services are provided “as is”, without warranty of any kind, either express or implied. Neither the publisher nor its partners, affiliates, employees, or contractors guarantee that this app will meet your requirements, provide uninterrupted use, or operate without delay or without error. Neither the publisher nor its partners, affiliates, employees, or contractors assume any responsibility for any errors and malfunctions within the app and will not provide support or maintenance of any kind. All provisions and warranties of any kind, express or implied, including but not limited to any guarantees of performance, process integrity, or particular functionalities, are hereby disclaimed and excluded unless otherwise prohibited or restricted by applicable law. Developed under EE FPA.",
+  "websiteURL": "https://www.innoship.com/",
+  "support": {
+    "url": "https://help-tickets.vtex.com/"
+  }
+}
